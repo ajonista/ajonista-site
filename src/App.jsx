@@ -195,6 +195,7 @@ function App() {
   <input type="tel" name="telefoon" />
   <input type="text" name="studie" />
   <textarea name="bericht"></textarea>
+  <button type="submit">Versturen</button>
 </form>
       {/* =========================
           Navbar
