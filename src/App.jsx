@@ -773,20 +773,22 @@ function App() {
             const formData = new FormData(form);
 
             try {
-              const response = await fetch("/", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams(formData).toString(),
-              });
+  const response = await fetch(window.location.pathname, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams(formData).toString(),
+  });
 
-              if (!response.ok) throw new Error("Verzenden mislukt");
+  if (!response.ok) throw new Error("Verzenden mislukt");
 
-              form.reset();
-              setShowSuccess(true);
-            } catch (error) {
-              console.error(error);
-              alert("Er ging iets mis bij het verzenden.");
-            }
+  form.reset();
+  setShowSuccess(true);
+} catch (error) {
+  console.error(error);
+  alert("Er ging iets mis bij het verzenden.");
+}
           }}
         >
           <input type="hidden" name="form-name" value="lid-worden" />
