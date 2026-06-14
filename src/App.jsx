@@ -125,6 +125,14 @@ function App() {
   const [selectedClubblad, setSelectedClubblad] = useState(null);
   const [filterAcademiejaar, setFilterAcademiejaar] = useState("Alle");
 
+ useEffect(() => {
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}, [page]); useEffect(() => {
+  window.scrollTo(0, 0);
+}, [page]);
+
+
   useEffect(() => {
     async function laadData() {
       const { data: eventsData } = await supabase
@@ -732,15 +740,17 @@ function App() {
                 subtitle="Word lid van Ajonista en maak deel uit van onze club. Vul je gegevens in en wij nemen contact met je op."
               />
 
-              <div className="mx-auto mb-8 flex max-w-3xl items-center gap-4">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#dcaa2d]" />
-                <img
-                  src={schildFoto}
-                  alt="Ajonista schild"
-                  className="h-24 w-24 object-contain mix-blend-screen drop-shadow-[0_0_25px_rgba(220,170,45,0.45)] md:h-32 md:w-32"
-                />
-                <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#dcaa2d]" />
-              </div>
+             <div className="mx-auto mb-8 flex max-w-3xl items-center gap-6">
+              <div className="h-[2px] flex-1 bg-[#dcaa2d]" />
+
+              <img
+                src={schildFoto}
+                alt="Ajonista"
+                className="h-32 w-auto object-contain"
+              />
+
+              <div className="h-[2px] flex-1 bg-[#dcaa2d]" />
+            </div>
 
               <form
                 className="mx-auto max-w-3xl space-y-5 rounded-3xl border border-[#dcaa2d]/30 bg-white/[0.06] p-5 shadow-[0_0_45px_rgba(0,0,0,0.65)] backdrop-blur-xl md:p-8"
@@ -833,39 +843,36 @@ function App() {
       {/* =========================
           Statuten
       ========================= */}
+        {page === "statuten" && (
+          <PageBackground variant="statuten">
+            <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+              <div className="mx-auto max-w-7xl">
+                <PageHeader
+                  title="Statuten"
+                  subtitle="Hieronder vind je de officiële statuten van Ajonista."
+                />
 
-      {page === "statuten" && (
-        <PageBackground variant="statuten">
-          <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-            <div className="mx-auto max-w-6xl">
-              <PageHeader
-                title="Statuten"
-                subtitle="Hieronder vind je de officiële statuten van Ajonista."
-              />
+                <div className="mb-8 flex justify-center">
+                  <a
+                    href={statutenPdf}
+                    download
+                    className="rounded-full border border-[#dcaa2d]/50 px-8 py-3 text-center font-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
+                  >
+                    Download de statuten (PDF)
+                  </a>
+                </div>
 
-              <div className="flex flex-col justify-center gap-4 sm:flex-row">
-                <a
-                  href={statutenPdf}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-full bg-[#dcaa2d] px-8 py-3 text-center font-black text-black transition hover:bg-[#f2c14b]"
-                >
-                  Open statuten
-                </a>
-
-                <a
-                  href={statutenPdf}
-                  download
-                  className="rounded-full border border-[#dcaa2d]/50 px-8 py-3 text-center font-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
-                >
-                  Download PDF
-                </a>
+                <div className="overflow-hidden rounded-3xl border border-[#dcaa2d]/30 bg-white">
+                  <iframe
+                    src={`${statutenPdf}#toolbar=0&navpanes=0&scrollbar=1&zoom=page-width`}
+                    title="Statuten Ajonista"
+                    className="h-[1600px] w-full"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </PageBackground>
-      )}
-
+          </PageBackground>
+        )}
       {/* =========================
           Footer
       ========================= */}
