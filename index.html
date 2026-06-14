@@ -1,14 +1,33 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
   <head>
     <meta charset="UTF-8" />
-   <link rel="icon" type="image/png" href="/schild.png?v=3" />
-<link rel="apple-touch-icon" href="/schild.png?v=3" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ajonista</title>
+
+    <link rel="icon" type="image/png" href="/schild.png?v=3" />
+    <link rel="apple-touch-icon" href="/schild.png?v=3" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>Ajonista</title>
   </head>
+
   <body>
+    <!-- Netlify Form Detectie -->
+    <form name="lid-worden" method="POST" data-netlify="true" hidden>
+      <input type="hidden" name="form-name" value="lid-worden" />
+      <input type="text" name="naam" />
+      <input type="text" name="achternaam" />
+      <input type="email" name="email" />
+      <input type="tel" name="telefoon" />
+      <input type="text" name="studie" />
+      <textarea name="bericht"></textarea>
+    </form>
+
     <div id="root"></div>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

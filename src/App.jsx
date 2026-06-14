@@ -187,21 +187,6 @@ function App() {
 
   return (
   <main>
-<form
-  name="lid-worden"
-  method="POST"
-  data-netlify="true"
-  hidden
->
-  <input type="hidden" name="form-name" value="lid-worden" />
-  <input type="text" name="naam" />
-  <input type="text" name="achternaam" />
-  <input type="email" name="email" />
-  <input type="tel" name="telefoon" />
-  <input type="text" name="studie" />
-  <textarea name="bericht"></textarea>
-</form> 
-
       {/* =========================
           Navbar
       ========================= */}
