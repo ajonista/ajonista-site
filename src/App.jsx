@@ -186,7 +186,15 @@ function App() {
   };
 
   return (
-    <main>
+  <main>
+    <form name="lid-worden" data-netlify="true" hidden>
+      <input type="text" name="naam" />
+      <input type="text" name="achternaam" />
+      <input type="email" name="email" />
+      <input type="tel" name="telefoon" />
+      <input type="text" name="studie" />
+      <textarea name="bericht"></textarea>
+    </form>
       {/* =========================
           Navbar
       ========================= */}
@@ -757,14 +765,32 @@ function App() {
               <div className="h-[2px] flex-1 bg-[#dcaa2d]" />
             </div>
 
-              <form
+             <form
                 className="mx-auto max-w-3xl space-y-5 rounded-3xl border border-[#dcaa2d]/30 bg-white/[0.06] p-5 shadow-[0_0_45px_rgba(0,0,0,0.65)] backdrop-blur-xl md:p-8"
                 name="lid-worden"
                 method="POST"
                 data-netlify="true"
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  setShowSuccess(true);
+
+                  const form = e.target;
+                  const formData = new FormData(form);
+
+                  try {
+                    await fetch("/", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                      },
+                      body: new URLSearchParams(formData).toString(),
+                    });
+
+                    setShowSuccess(true);
+                    form.reset();
+                  } catch (error) {
+                    console.error(error);
+                    alert("Er ging iets mis bij het verzenden.");
+                  }
                 }}
               >
                 <input type="hidden" name="form-name" value="lid-worden" />
