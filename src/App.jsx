@@ -187,7 +187,12 @@ function App() {
 
   return (
   <main>
-   <form name="lid-worden" method="POST" data-netlify="true" hidden>
+<form
+  name="lid-worden"
+  method="POST"
+  data-netlify="true"
+  hidden
+>
   <input type="hidden" name="form-name" value="lid-worden" />
   <input type="text" name="naam" />
   <input type="text" name="achternaam" />
@@ -195,8 +200,8 @@ function App() {
   <input type="tel" name="telefoon" />
   <input type="text" name="studie" />
   <textarea name="bericht"></textarea>
-  <button type="submit">Versturen</button>
-</form>
+</form> 
+
       {/* =========================
           Navbar
       ========================= */}
@@ -773,7 +778,7 @@ function App() {
             const formData = new FormData(form);
 
             try {
-  const response = await fetch(window.location.pathname, {
+ const response = await fetch("/", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
