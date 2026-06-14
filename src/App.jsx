@@ -280,76 +280,35 @@ function App() {
       ========================= */}
 
       {page === "home" && (
-        <section className="w-full bg-[#010101]">
-          {/* Mobile */}
-          <div className="pt-15 pb-0 md:hidden">
-            <img
-              src={bannerMobile}
-              alt="Ajonista banner mobiel"
-              className="w-full"
-            />
-          </div>
+  <section className="w-full bg-[#010101]">
+    {/* Mobile */}
+    <div className="pt-16 md:hidden">
+      <img
+        src={bannerMobile}
+        alt="Ajonista banner mobiel"
+        className="block w-full"
+      />
+    </div>
 
-          {/* Laptop */}
-          <div className="hidden pt-11 pb-0 md:block xl:hidden">
-            <img
-              src={bannerLaptop}
-              alt="Ajonista banner laptop"
-              className="w-full"
-            />
-          </div>
+    {/* Laptop */}
+    <div className="hidden pt-20 md:block xl:hidden">
+      <img
+        src={bannerLaptop}
+        alt="Ajonista banner laptop"
+        className="block w-full"
+      />
+    </div>
 
-          {/* Desktop */}
-          <div className="hidden pt-18 pb-0 xl:block">
-            <img
-              src={bannerDesktop}
-              alt="Ajonista banner desktop"
-              className="w-full"
-            />
-          </div>
-        </section>
-      )}
-
-      {/* =========================
-          Praesidium
-      ========================= */}
-
-      {page === "praesidium" && (
-        <PageBackground variant="praesidium">
-          <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-            <div className="mx-auto max-w-6xl">
-              <PageHeader title="Huidig Praesidium" />
-
-              <div className="grid justify-items-center gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {praesidiumData.map((persoon) => (
-                  <button
-                    key={persoon.id}
-                    type="button"
-                    onClick={() => setSelectedMember(persoon)}
-                    className="group w-full max-w-[280px] cursor-pointer rounded-3xl border border-[#dcaa2d]/30 bg-black/60 p-6 text-center backdrop-blur-xl transition hover:-translate-y-1 hover:border-[#dcaa2d] active:scale-[0.98]"
-                  >
-                    <img
-                      src={persoon.foto_url}
-                      alt={persoon.naam}
-                      className="mx-auto mb-4 h-28 w-28 rounded-full border-2 border-[#dcaa2d] object-cover"
-                    />
-
-                    <h3 className="mb-1 text-lg font-black text-[#dcaa2d]">
-                      {persoon.functie}
-                    </h3>
-
-                    <p className="font-semibold text-white">{persoon.naam}</p>
-
-                    <p className="mt-3 text-xs font-bold uppercase tracking-wider text-[#dcaa2d] opacity-100 md:opacity-0 md:transition md:group-hover:opacity-100">
-                      Tik voor profiel
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </PageBackground>
-      )}
+    {/* Desktop */}
+    <div className="hidden pt-20 xl:block">
+      <img
+        src={bannerDesktop}
+        alt="Ajonista banner desktop"
+        className="block w-full"
+      />
+    </div>
+  </section>
+)}
 
       {/* =========================
           Praesidium modal
