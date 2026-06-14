@@ -5,6 +5,13 @@ import { supabase } from "./supabaseClient";
 import schildFoto from "./assets/schild.png";
 import statutenPdf from "./assets/statuten.pdf";
 import clubliedMp3 from "./assets/clublied.mp3";
+import bannerDesktop from "./assets/banner-desktop.png";
+import bannerLaptop from "./assets/banner-laptop.png";
+import bannerMobile from "./assets/banner-mobile.png";
+
+import achtergrondDesktop from "./assets/achtergrond/achtergrond-desktop.png";
+import achtergrondMacbook from "./assets/achtergrond/achtergrond-macbook.png";
+import achtergrondClublied from "./assets/achtergrond/achtergrond-clublied.png";
 
 import {
   FaInstagram,
@@ -277,7 +284,7 @@ function App() {
           {/* Mobile */}
           <div className="pt-15 pb-0 md:hidden">
             <img
-              src="/src/assets/banner-mobile.png"
+              src={bannerMobile}
               alt="Ajonista banner mobiel"
               className="w-full"
             />
@@ -286,7 +293,7 @@ function App() {
           {/* Laptop */}
           <div className="hidden pt-11 pb-0 md:block xl:hidden">
             <img
-              src="/src/assets/banner-laptop.png"
+              src={bannerLaptop}
               alt="Ajonista banner laptop"
               className="w-full"
             />
@@ -295,7 +302,7 @@ function App() {
           {/* Desktop */}
           <div className="hidden pt-18 pb-0 xl:block">
             <img
-              src="/src/assets/banner-desktop.png"
+              src={bannerDesktop}
               alt="Ajonista banner desktop"
               className="w-full"
             />
