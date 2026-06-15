@@ -737,100 +737,125 @@ function App() {
       ========================= */}
 
           {page === "lidworden" && (
-      <PageBackground variant="lidworden">
-        <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-          <div className="mx-auto max-w-6xl">
-            <PageHeader
-              title="Lid worden"
-              subtitle="Word lid van Ajonista en maak deel uit van onze club. Vul je gegevens in en wij nemen contact met je op."
-            />
+  <PageBackground variant="lidworden">
+    <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+      <div className="mx-auto max-w-6xl">
+        <PageHeader
+          title="Lid worden"
+          subtitle="Word lid van Ajonista en maak deel uit van onze club. Vul je gegevens in en wij nemen contact met je op."
+        />
 
-            <div className="mx-auto mb-8 flex max-w-3xl items-center gap-6">
-              <div className="h-[2px] flex-1 bg-[#dcaa2d]" />
-              <img src={schildFoto} alt="Ajonista" className="h-32 w-auto object-contain" />
-              <div className="h-[2px] flex-1 bg-[#dcaa2d]" />
-            </div>
-
-              🎓 Lidmaatschap bij Ajonista
-
-            <form
-              name="lid-worden"
-              method="POST"
-              data-netlify="true"
-              className="mx-auto max-w-3xl space-y-5 rounded-3xl border border-[#dcaa2d]/30 bg-white/[0.06] p-5 shadow-[0_0_45px_rgba(0,0,0,0.65)] backdrop-blur-xl md:p-8"
-              onSubmit={async (e) => {
-                e.preventDefault();
-
-                const form = e.currentTarget;
-                const formData = new FormData(form);
-
-                try {
-    const response = await fetch("/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams(formData).toString(),
-      });
-
-      if (!response.ok) throw new Error("Verzenden mislukt");
-
-      form.reset();
-      setShowSuccess(true);
-    } catch (error) {
-      console.error(error);
-      alert("Er ging iets mis bij het verzenden.");
-    }
-              }}
-            >
-              <input type="hidden" name="form-name" value="lid-worden" />
-
-              {[
-                ["naam", "Voornaam*", "Jouw voornaam", <FaUser />, "text", true],
-                ["achternaam", "Achternaam*", "Jouw achternaam", <FaUser />, "text", true],
-                ["email", "E-mail*", "jouw@email.com", <MdEmail />, "email", true],
-                ["telefoon", "Telefoonnummer", "+32 4 123 45 67", <FaPhoneAlt />, "tel", false],
-                ["studie", "Studierichting / werk", "studierichting/werk?", <FaGraduationCap />, "text", false],
-              ].map(([name, label, placeholder, icon, type, required]) => (
-                <label className="block" key={name}>
-                  <span className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-[#dcaa2d]">
-                    {icon} {label}
-                  </span>
-
-                  <input
-                    type={type}
-                    name={name}
-                    placeholder={placeholder}
-                    required={required}
-                    className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none transition placeholder:text-white/35 focus:border-[#dcaa2d] focus:ring-2 focus:ring-[#dcaa2d]/30"
-                  />
-                </label>
-              ))}
-
-              <label className="block">
-                <span className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-[#dcaa2d]">
-                  <FaPen /> Bericht
-                </span>
-
-                <textarea
-                  name="bericht"
-                  rows="5"
-                  placeholder="Moest je nog iets willen toevoegen..."
-                  className="w-full resize-none rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none transition placeholder:text-white/35 focus:border-[#dcaa2d] focus:ring-2 focus:ring-[#dcaa2d]/30"
-                />
-              </label>
-
-              <button
-                className="mt-4 w-full rounded-full bg-[#dcaa2d] px-8 py-4 text-base font-black uppercase tracking-[0.18em] text-black shadow-[0_0_30px_rgba(220,170,45,0.35)] transition hover:-translate-y-1 hover:bg-[#f2c14b] active:translate-y-0"
-                type="submit"
-              >
-                Versturen
-              </button>
-            </form>
-          </div>
+        <div className="mx-auto mb-8 flex max-w-3xl items-center gap-6">
+          <div className="h-[2px] flex-1 bg-[#dcaa2d]" />
+          <img
+            src={schildFoto}
+            alt="Ajonista"
+            className="h-32 w-auto object-contain"
+          />
+          <div className="h-[2px] flex-1 bg-[#dcaa2d]" />
         </div>
-      </PageBackground>
-    )}
+
+        <div className="mx-auto mb-8 max-w-3xl rounded-3xl border border-[#dcaa2d]/30 bg-white/[0.06] p-6 text-center shadow-[0_0_45px_rgba(0,0,0,0.55)] backdrop-blur-xl md:p-8">
+          <h3 className="mb-4 text-2xl font-black uppercase tracking-[0.16em] text-[#dcaa2d]">
+            Lidmaatschap bij Ajonista
+          </h3>
+
+          <p className="mb-4 text-base leading-relaxed text-white/85 md:text-lg">
+            Tijdens ons eerste werkingsjaar bedraagt het lidgeld{" "}
+            <span className="font-black text-[#dcaa2d]">€30</span>, inclusief
+            het officiële Ajonista-lint.
+          </p>
+
+          <p className="mb-4 text-base leading-relaxed text-white/85 md:text-lg">
+            Om onze club een sterke start te geven, wordt elk nieuw lid dit jaar
+            onmiddellijk commi. Deze uitzonderlijke regeling geldt enkel tijdens
+            het eerste werkingsjaar van Ajonista.
+          </p>
+
+          <p className="text-base leading-relaxed text-white/85 md:text-lg">
+            Vanaf volgend academiejaar zullen nieuwe leden opnieuw het
+            traditionele schachtentraject doorlopen.
+          </p>
+        </div>
+
+        <form
+          name="lid-worden"
+          method="POST"
+          data-netlify="true"
+          className="mx-auto max-w-3xl space-y-5 rounded-3xl border border-[#dcaa2d]/30 bg-white/[0.06] p-5 shadow-[0_0_45px_rgba(0,0,0,0.65)] backdrop-blur-xl md:p-8"
+          onSubmit={async (e) => {
+            e.preventDefault();
+
+            const form = e.currentTarget;
+            const formData = new FormData(form);
+
+            try {
+              const response = await fetch("/", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: new URLSearchParams(formData).toString(),
+              });
+
+              if (!response.ok) throw new Error("Verzenden mislukt");
+
+              form.reset();
+              setShowSuccess(true);
+            } catch (error) {
+              console.error(error);
+              alert("Er ging iets mis bij het verzenden.");
+            }
+          }}
+        >
+          <input type="hidden" name="form-name" value="lid-worden" />
+
+          {[
+            ["naam", "Voornaam*", "Jouw voornaam", <FaUser />, "text", true],
+            ["achternaam", "Achternaam*", "Jouw achternaam", <FaUser />, "text", true],
+            ["email", "E-mail*", "jouw@email.com", <MdEmail />, "email", true],
+            ["telefoon", "Telefoonnummer", "+32 4 123 45 67", <FaPhoneAlt />, "tel", false],
+            ["studie", "Studierichting / werk", "Studierichting of werk", <FaGraduationCap />, "text", false],
+          ].map(([name, label, placeholder, icon, type, required]) => (
+            <label className="block" key={name}>
+              <span className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-[#dcaa2d]">
+                {icon} {label}
+              </span>
+
+              <input
+                type={type}
+                name={name}
+                placeholder={placeholder}
+                required={required}
+                className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none transition placeholder:text-white/35 focus:border-[#dcaa2d] focus:ring-2 focus:ring-[#dcaa2d]/30"
+              />
+            </label>
+          ))}
+
+          <label className="block">
+            <span className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-[#dcaa2d]">
+              <FaPen /> Bericht
+            </span>
+
+            <textarea
+              name="bericht"
+              rows="5"
+              placeholder="Moest je nog iets willen toevoegen..."
+              className="w-full resize-none rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none transition placeholder:text-white/35 focus:border-[#dcaa2d] focus:ring-2 focus:ring-[#dcaa2d]/30"
+            />
+          </label>
+
+          <button
+            className="mt-4 w-full rounded-full bg-[#dcaa2d] px-8 py-4 text-base font-black uppercase tracking-[0.18em] text-black shadow-[0_0_30px_rgba(220,170,45,0.35)] transition hover:-translate-y-1 hover:bg-[#f2c14b] active:translate-y-0"
+            type="submit"
+          >
+            Versturen
+          </button>
+        </form>
+      </div>
+    </div>
+  </PageBackground>
+)}
 
       {/* =========================
           Succesmelding lid worden
