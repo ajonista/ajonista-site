@@ -751,6 +751,28 @@ function App() {
           <div className="h-[2px] flex-1 bg-[#dcaa2d]" />
         </div>
 
+          <div className="mb-8 rounded-3xl border border-[#dcaa2d]/30 bg-black/40 p-6 text-center">
+            <h3 className="mb-3 text-xl font-black text-[#dcaa2d]">
+              Lidgeld & commi-regeling
+            </h3>
+
+            <p className="text-white/90">
+              Tijdens ons eerste werkingsjaar bedraagt het lidgeld €30, inclusief het
+              officiële Ajonista-lint.
+            </p>
+
+            <p className="mt-3 text-white/90">
+              Om onze club een sterke start te geven, wordt elk nieuw lid dit jaar
+              onmiddellijk <strong>commi</strong>. Deze uitzonderlijke regeling geldt
+              enkel tijdens het eerste werkingsjaar van Ajonista.
+            </p>
+
+            <p className="mt-3 text-white/90">
+              Vanaf volgend academiejaar zullen nieuwe leden opnieuw het traditionele
+              <strong> schachtentraject</strong> doorlopen.
+            </p>
+          </div>
+          
         <form
           name="lid-worden"
           method="POST"
