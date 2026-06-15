@@ -758,6 +758,7 @@ function App() {
         <div className="mx-auto mb-8 max-w-3xl rounded-3xl border border-[#dcaa2d]/30 bg-white/[0.06] p-6 text-center shadow-[0_0_45px_rgba(0,0,0,0.55)] backdrop-blur-xl md:p-8">
           <h3 className="mb-4 text-2xl font-black uppercase tracking-[0.16em] text-[#dcaa2d]">
             Lidmaatschap bij Ajonista
+            wat houdt het in?
           </h3>
 
           <p className="mb-4 text-base leading-relaxed text-white/85 md:text-lg">
