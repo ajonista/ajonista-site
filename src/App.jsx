@@ -760,7 +760,7 @@ function App() {
             Lidmaatschap bij Ajonista
           </h3>
 
-          <p className="mb-4 text-sm uppercase tracking-[0.2em] text-[#dcaa2d]/80">
+          <p className="mb-4 text-sm text-[#dcaa2d]/80">
             Wat houdt dit in?
           </p>
 
