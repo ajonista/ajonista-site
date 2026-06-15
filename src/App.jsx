@@ -307,6 +307,51 @@ function App() {
         className="block w-full"
       />
     </div>
+
+    {/* SEO tekst */}
+    <section className="mx-auto max-w-5xl px-6 py-16 text-center text-white">
+      <h1 className="mb-6 text-4xl font-black uppercase tracking-[0.12em] text-[#dcaa2d] sm:text-5xl">
+        Studentenclub Ajonista Aalst
+      </h1>
+
+      <p className="mx-auto mb-8 max-w-3xl text-lg font-semibold leading-relaxed text-white/75">
+        Ajonista is een studentenclub in Aalst voor studenten die graag uitgaan,
+        nieuwe mensen leren kennen en deelnemen aan evenementen, clubavonden,
+        cantussen en studentenactiviteiten.
+      </p>
+
+      <div className="grid gap-6 text-left md:grid-cols-3">
+        <div className="rounded-3xl border border-[#dcaa2d]/25 bg-white/[0.04] p-6">
+          <h2 className="mb-3 text-xl font-black text-[#dcaa2d]">
+            Studentenleven in Aalst
+          </h2>
+          <p className="text-white/70">
+            Ben je student in Aalst en zoek je een studentenvereniging of
+            studentenclub? Ajonista brengt studenten samen in Aalst en omgeving.
+          </p>
+        </div>
+
+        <div className="rounded-3xl border border-[#dcaa2d]/25 bg-white/[0.04] p-6">
+          <h2 className="mb-3 text-xl font-black text-[#dcaa2d]">
+            Events en clubavonden
+          </h2>
+          <p className="text-white/70">
+            Ontdek onze evenementen, clubavonden, studentenfeesten en andere
+            activiteiten voor studenten in Aalst.
+          </p>
+        </div>
+
+        <div className="rounded-3xl border border-[#dcaa2d]/25 bg-white/[0.04] p-6">
+          <h2 className="mb-3 text-xl font-black text-[#dcaa2d]">
+            Cantussen en lid worden
+          </h2>
+          <p className="text-white/70">
+            Word lid van Ajonista en maak deel uit van cantussen, activiteiten
+            en het studentenleven in Aalst.
+          </p>
+        </div>
+      </div>
+    </section>
   </section>
 )}
         {/* =========================
