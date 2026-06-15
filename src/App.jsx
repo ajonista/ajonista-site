@@ -736,7 +736,7 @@ function App() {
           Lid worden
       ========================= */}
 
-          {page === "lidworden" && (
+         {page === "lidworden" && (
   <PageBackground variant="lidworden">
     <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
       <div className="mx-auto max-w-6xl">
@@ -756,10 +756,13 @@ function App() {
         </div>
 
         <div className="mx-auto mb-8 max-w-3xl rounded-3xl border border-[#dcaa2d]/30 bg-white/[0.06] p-6 text-center shadow-[0_0_45px_rgba(0,0,0,0.55)] backdrop-blur-xl md:p-8">
-          <h3 className="mb-4 text-2xl font-black uppercase tracking-[0.16em] text-[#dcaa2d]">
+          <h3 className="mb-4 text-lg font-black text-[#dcaa2d]">
             Lidmaatschap bij Ajonista
-            wat houdt het in?
           </h3>
+
+          <p className="mb-4 text-sm uppercase tracking-[0.2em] text-[#dcaa2d]/80">
+            Wat houdt dit in?
+          </p>
 
           <p className="mb-4 text-base leading-relaxed text-white/85 md:text-lg">
             Tijdens ons eerste werkingsjaar bedraagt het lidgeld{" "}
