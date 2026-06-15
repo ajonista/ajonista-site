@@ -862,36 +862,53 @@ function App() {
       {/* =========================
           Statuten
       ========================= */}
-        {page === "statuten" && (
-          <PageBackground variant="statuten">
-            <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-              <div className="mx-auto max-w-7xl">
-                <PageHeader
-                  title="Statuten"
-                  subtitle="Hieronder vind je de officiële statuten van Ajonista."
-                />
+       {page === "statuten" && (
+  <PageBackground variant="statuten">
+    <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+      <div className="mx-auto max-w-7xl">
+        <PageHeader
+          title="Statuten"
+          subtitle="Hieronder vind je de officiële statuten van Ajonista."
+        />
 
-                <div className="mb-8 flex justify-center">
-                  <a
-                    href={statutenPdf}
-                    download
-                    className="rounded-full border border-[#dcaa2d]/50 px-8 py-3 text-center font-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
-                  >
-                    Download de statuten (PDF)
-                  </a>
-                </div>
+        {/* Mobiel */}
+        <div className="md:hidden">
+          <div className="flex justify-center">
+            <a
+              href={statutenPdf}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-[#dcaa2d]/50 px-8 py-3 text-center font-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
+            >
+              Open de statuten (PDF)
+            </a>
+          </div>
+        </div>
 
-                <div className="overflow-hidden rounded-3xl border border-[#dcaa2d]/30 bg-white">
-                  <iframe
-                    src={`${statutenPdf}#toolbar=0&navpanes=0&scrollbar=1&zoom=page-width`}
-                    title="Statuten Ajonista"
-                    className="h-[1600px] w-full"
-                  />
-                </div>
-              </div>
-            </div>
-          </PageBackground>
-        )}
+        {/* Desktop & tablet */}
+        <div className="hidden md:block">
+          <div className="mb-8 flex justify-center">
+            <a
+              href={statutenPdf}
+              download
+              className="rounded-full border border-[#dcaa2d]/50 px-8 py-3 text-center font-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
+            >
+              Download de statuten (PDF)
+            </a>
+          </div>
+
+          <div className="overflow-hidden rounded-3xl border border-[#dcaa2d]/30 bg-white">
+            <iframe
+              src={`${statutenPdf}#toolbar=0&navpanes=0&scrollbar=1&zoom=page-width`}
+              title="Statuten Ajonista"
+              className="h-[1600px] w-full"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </PageBackground>
+)}
       {/* =========================
           Footer
       ========================= */}
