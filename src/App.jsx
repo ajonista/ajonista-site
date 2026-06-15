@@ -874,11 +874,11 @@ function App() {
         {/* Mobiel */}
         <div className="md:hidden">
           <div className="flex flex-col items-center gap-4">
-          <a
+         <a
           href={statutenPdf}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full max-w-sm rounded-full border border-[#dcaa2d]/50 bg-transparent px-8 py-3 text-center font-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
+          className="w-full max-w-sm rounded-full bg-[#dcaa2d] px-8 py-3 text-center font-black text-black transition hover:bg-[#f2c14b]"
         >
           Open de statuten
         </a>
