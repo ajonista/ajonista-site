@@ -902,30 +902,30 @@ function App() {
           subtitle="Hieronder vind je de officiële statuten van Ajonista."
         />
 
-        {/* Mobiel */}
-        <div className="md:hidden">
+        {/* Mobiel & iPad/tablet */}
+        <div className="lg:hidden">
           <div className="flex flex-col items-center gap-4">
-         <a
-          href={statutenPdf}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full max-w-sm rounded-full bg-[#dcaa2d] px-8 py-3 text-center font-black text-black transition hover:bg-[#f2c14b]"
-        >
-          Open de statuten
-        </a>
+            <a
+              href={statutenPdf}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full max-w-sm rounded-full bg-[#dcaa2d] px-8 py-3 text-center font-black text-black transition hover:bg-[#f2c14b]"
+            >
+              Open de statuten
+            </a>
 
             <a
-          href={statutenPdf}
-          download
-          className="w-full max-w-sm rounded-full border border-[#dcaa2d]/50 px-8 py-3 text-center font-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
-        >
-          Download de statuten
-        </a>
+              href={statutenPdf}
+              download
+              className="w-full max-w-sm rounded-full border border-[#dcaa2d]/50 px-8 py-3 text-center font-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
+            >
+              Download de statuten
+            </a>
           </div>
         </div>
 
-        {/* Desktop & tablet */}
-        <div className="hidden md:block">
+        {/* Alleen desktop/laptop */}
+        <div className="hidden lg:block">
           <div className="mb-8 flex justify-center">
             <a
               href={statutenPdf}
