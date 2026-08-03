@@ -623,6 +623,7 @@ useEffect(() => {
     {calendarMenuOpen && (
       <div
         role="menu"
+        onMouseLeave={() => setCalendarMenuOpen(false)}
         className="absolute right-[-12px] top-[calc(100%+0.5rem)] z-[999] w-full min-w-[240px] overflow-hidden rounded-2xl border border-[#dcaa2d]/40 bg-[#111] p-2 text-left shadow-[0_18px_45px_rgba(0,0,0,0.85)] sm:right-0 sm:w-[250px]"
       >
         <a
@@ -631,7 +632,7 @@ useEffect(() => {
           rel="noopener noreferrer"
           role="menuitem"
           onClick={() => setCalendarMenuOpen(false)}
-          className="block rounded-xl px-4 py-3 text-sm font-black text-white transition hover:bg-[#dcaa2d] hover:text-black"
+          className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:translate-x-1 hover:bg-[#dcaa2d] hover:text-black"
         >
           Google Agenda
         </a>
@@ -640,7 +641,7 @@ useEffect(() => {
           href={AJONISTA_APPLE_CALENDAR_LINK}
           role="menuitem"
           onClick={() => setCalendarMenuOpen(false)}
-          className="block rounded-xl px-4 py-3 text-sm font-black text-white transition hover:bg-[#dcaa2d] hover:text-black"
+          className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:translate-x-1  hover:bg-[#dcaa2d] hover:text-black"
         >
           Apple Agenda
         </a>
@@ -651,7 +652,7 @@ useEffect(() => {
           rel="noopener noreferrer"
           role="menuitem"
           onClick={() => setCalendarMenuOpen(false)}
-          className="block rounded-xl px-4 py-3 text-sm font-black text-white transition hover:bg-[#dcaa2d] hover:text-black"
+          className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:translate-x-1  hover:bg-[#dcaa2d] hover:text-black"
         >
           Outlook / andere agenda
         </a>
