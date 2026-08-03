@@ -43,11 +43,23 @@ const AJONISTA_APPLE_CALENDAR_LINK = AJONISTA_ICAL_LINK.replace(
   "webcal://"
 );
 
+function formatDatum(datum) {
+  if (!datum) return "";
+
+  const [jaar, maand, dag] = datum.split("-");
+
+  if (!jaar || !maand || !dag) {
+    return datum;
+  }
+
+  return `${dag}/${maand}`;
+}
+
 function maakAgendaLink(event) {
   if (!event.datum || !event.tijd || event.tijd === "TBA") return null;
 
   const start = new Date(`${event.datum}T${event.tijd}`);
-  if (isNaN(start.getTime())) return null;
+  if (Number.isNaN(start.getTime())) return null;
 
   const einde = new Date(start.getTime() + 3 * 60 * 60 * 1000);
 
@@ -55,12 +67,11 @@ function maakAgendaLink(event) {
     date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-    event.titel
+    event.titel || "Ajonista-event"
   )}&dates=${formatDate(start)}/${formatDate(einde)}&details=${encodeURIComponent(
     event.beschrijving || ""
   )}&location=${encodeURIComponent(event.locatie || "")}`;
 }
-
 /* =========================
    Achtergrond per pagina
 ========================= */
