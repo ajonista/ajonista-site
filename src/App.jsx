@@ -1,5 +1,5 @@
 import "./index.css";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "./supabaseClient";
 
 import schildFoto from "./assets/schild.png";
@@ -152,6 +152,26 @@ const [selectedClubblad, setSelectedClubblad] = useState(null);
 const [filterAcademiejaar, setFilterAcademiejaar] = useState("Alle");
 
 const [calendarMenuOpen, setCalendarMenuOpen] = useState(false);
+const calendarMenuRef = useRef(null);
+
+useEffect(() => {
+  function handleClickOutside(event) {
+    if (
+      calendarMenuRef.current &&
+      !calendarMenuRef.current.contains(event.target)
+    ) {
+      setCalendarMenuOpen(false);
+    }
+  }
+
+  document.addEventListener("mousedown", handleClickOutside);
+  document.addEventListener("touchstart", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+    document.removeEventListener("touchstart", handleClickOutside);
+  };
+}, []);
 
  useEffect(() => {
   document.documentElement.scrollTop = 0;
@@ -568,74 +588,77 @@ const [calendarMenuOpen, setCalendarMenuOpen] = useState(false);
       <div className="mx-auto max-w-6xl">
         <PageHeader title="Events" subtitle="Komende events" />
 
-        {/* Volledige kalender toevoegen */}
-        <div className="mx-auto mb-8 flex max-w-3xl flex-col items-center justify-between gap-4 rounded-2xl border border-[#dcaa2d]/35 bg-black/60 p-4 text-center shadow-[0_12px_28px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:flex-row sm:p-5 sm:text-left">
-          <div className="flex items-center gap-4">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#dcaa2d] text-lg text-black">
-              <FaCalendarAlt />
-            </div>
+       {/* Volledige kalender toevoegen */}
+<div className="relative z-[100] mx-auto mb-8 flex max-w-3xl flex-col items-center justify-between gap-4 rounded-2xl border border-[#dcaa2d]/35 bg-black/60 p-4 text-center shadow-[0_12px_28px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:flex-row sm:p-5 sm:text-left">
+  <div className="flex items-center gap-4">
+    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#dcaa2d] text-lg text-black">
+      <FaCalendarAlt />
+    </div>
 
-            <div>
-              <h3 className="font-black text-white">
-                Mis geen enkel event
-              </h3>
+    <div>
+      <h3 className="font-black text-white">
+        Mis geen enkel event
+      </h3>
 
-              <p className="text-sm text-white/60">
-                Abonneer je op de volledige Ajonista-agenda.
-              </p>
-            </div>
-          </div>
+      <p className="text-sm text-white/60">
+        Abonneer je op de volledige Ajonista-agenda.
+      </p>
+    </div>
+  </div>
 
-          <div className="relative w-full shrink-0 sm:w-auto">
-            <button
-              type="button"
-              onClick={() => setCalendarMenuOpen((open) => !open)}
-              aria-expanded={calendarMenuOpen}
-              aria-haspopup="menu"
-              className="flex h-11 w-full items-center justify-center rounded-full bg-[#dcaa2d] px-6 text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b] sm:w-auto"
-            >
-              Kalender toevoegen
-            </button>
+  <div
+    ref={calendarMenuRef}
+    className="relative w-full shrink-0 sm:ml-auto sm:w-auto"
+  >
+    <button
+      type="button"
+      onClick={() => setCalendarMenuOpen((open) => !open)}
+      aria-expanded={calendarMenuOpen}
+      aria-haspopup="menu"
+      className="flex h-11 w-full items-center justify-center rounded-full bg-[#dcaa2d] px-7 text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b] sm:w-auto"
+    >
+      Kalender toevoegen
+    </button>
 
-            {calendarMenuOpen && (
-              <div
-                role="menu"
-                className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-full min-w-[230px] overflow-hidden rounded-2xl border border-[#dcaa2d]/40 bg-[#111] p-2 text-left shadow-[0_15px_35px_rgba(0,0,0,0.65)] sm:w-[240px]"
-              >
-                <a
-                  href={AJONISTA_GOOGLE_CALENDAR_LINK}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  role="menuitem"
-                  onClick={() => setCalendarMenuOpen(false)}
-                  className="block rounded-xl px-4 py-3 text-sm font-black text-white transition hover:bg-[#dcaa2d] hover:text-black"
-                >
-                  Google Agenda
-                </a>
+    {calendarMenuOpen && (
+      <div
+        role="menu"
+        className="absolute right-[-12px] top-[calc(100%+0.5rem)] z-[999] w-full min-w-[240px] overflow-hidden rounded-2xl border border-[#dcaa2d]/40 bg-[#111] p-2 text-left shadow-[0_18px_45px_rgba(0,0,0,0.85)] sm:right-0 sm:w-[250px]"
+      >
+        <a
+          href={AJONISTA_GOOGLE_CALENDAR_LINK}
+          target="_blank"
+          rel="noopener noreferrer"
+          role="menuitem"
+          onClick={() => setCalendarMenuOpen(false)}
+          className="block rounded-xl px-4 py-3 text-sm font-black text-white transition hover:bg-[#dcaa2d] hover:text-black"
+        >
+          Google Agenda
+        </a>
 
-                <a
-                  href={AJONISTA_APPLE_CALENDAR_LINK}
-                  role="menuitem"
-                  onClick={() => setCalendarMenuOpen(false)}
-                  className="block rounded-xl px-4 py-3 text-sm font-black text-white transition hover:bg-[#dcaa2d] hover:text-black"
-                >
-                  Apple Agenda
-                </a>
+        <a
+          href={AJONISTA_APPLE_CALENDAR_LINK}
+          role="menuitem"
+          onClick={() => setCalendarMenuOpen(false)}
+          className="block rounded-xl px-4 py-3 text-sm font-black text-white transition hover:bg-[#dcaa2d] hover:text-black"
+        >
+          Apple Agenda
+        </a>
 
-                <a
-                  href={AJONISTA_ICAL_LINK}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  role="menuitem"
-                  onClick={() => setCalendarMenuOpen(false)}
-                  className="block rounded-xl px-4 py-3 text-sm font-black text-white transition hover:bg-[#dcaa2d] hover:text-black"
-                >
-                  Outlook / andere agenda
-                </a>
-              </div>
-            )}
-          </div>
-        </div>
+        <a
+          href={AJONISTA_ICAL_LINK}
+          target="_blank"
+          rel="noopener noreferrer"
+          role="menuitem"
+          onClick={() => setCalendarMenuOpen(false)}
+          className="block rounded-xl px-4 py-3 text-sm font-black text-white transition hover:bg-[#dcaa2d] hover:text-black"
+        >
+          Outlook / andere agenda
+        </a>
+      </div>
+    )}
+  </div>
+</div>
 
         {/* Individuele events */}
         <div className="space-y-3 sm:space-y-5">
