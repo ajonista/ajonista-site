@@ -30,17 +30,18 @@ import { MdEmail } from "react-icons/md";
 const AJONISTA_CALENDAR_ID =
   "4449993a4bdfc8fbe04fba2e905cb722a0325af20297a087c94cbcff1f25abd9@group.calendar.google.com";
 
-const AJONISTA_CALENDAR_LINK = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(
+const AJONISTA_GOOGLE_CALENDAR_LINK = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(
   AJONISTA_CALENDAR_ID
 )}`;
 
-function formatDatum(datum) {
-  const date = new Date(datum);
-  return date.toLocaleDateString("nl-BE", {
-    day: "2-digit",
-    month: "2-digit",
-  });
-}
+const AJONISTA_ICAL_LINK = `https://calendar.google.com/calendar/ical/${encodeURIComponent(
+  AJONISTA_CALENDAR_ID
+)}/public/basic.ics`;
+
+const AJONISTA_APPLE_CALENDAR_LINK = AJONISTA_ICAL_LINK.replace(
+  "https://",
+  "webcal://"
+);
 
 function maakAgendaLink(event) {
   if (!event.datum || !event.tijd || event.tijd === "TBA") return null;
@@ -128,16 +129,18 @@ function PageHeader({ title, subtitle }) {
 ========================= */
 
 function App() {
-  const [page, setPage] = useState("home");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [events, setEvents] = useState([]);
-  const [praesidiumData, setPraesidiumData] = useState([]);
-  const [showSuccess, setShowSuccess] = useState(false);
+ const [page, setPage] = useState("home");
+const [menuOpen, setMenuOpen] = useState(false);
+const [selectedMember, setSelectedMember] = useState(null);
+const [events, setEvents] = useState([]);
+const [praesidiumData, setPraesidiumData] = useState([]);
+const [showSuccess, setShowSuccess] = useState(false);
 
-  const [clubbladen, setClubbladen] = useState([]);
-  const [selectedClubblad, setSelectedClubblad] = useState(null);
-  const [filterAcademiejaar, setFilterAcademiejaar] = useState("Alle");
+const [clubbladen, setClubbladen] = useState([]);
+const [selectedClubblad, setSelectedClubblad] = useState(null);
+const [filterAcademiejaar, setFilterAcademiejaar] = useState("Alle");
+
+const [calendarMenuOpen, setCalendarMenuOpen] = useState(false);
 
  useEffect(() => {
   document.documentElement.scrollTop = 0;
@@ -545,15 +548,16 @@ function App() {
       )}
 
       {/* =========================
-          Events
-      ========================= */}
+    Events
+========================= */}
 
-     {page === "events" && (
+{page === "events" && (
   <PageBackground variant="events">
     <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
       <div className="mx-auto max-w-6xl">
         <PageHeader title="Events" subtitle="Komende events" />
 
+        {/* Volledige kalender toevoegen */}
         <div className="mx-auto mb-8 flex max-w-3xl flex-col items-center justify-between gap-4 rounded-2xl border border-[#dcaa2d]/35 bg-black/60 p-4 text-center shadow-[0_12px_28px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:flex-row sm:p-5 sm:text-left">
           <div className="flex items-center gap-4">
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#dcaa2d] text-lg text-black">
@@ -566,21 +570,63 @@ function App() {
               </h3>
 
               <p className="text-sm text-white/60">
-                Voeg de volledige Ajonista-agenda toe.
+                Abonneer je op de volledige Ajonista-agenda.
               </p>
             </div>
           </div>
 
-          <a
-            href={AJONISTA_CALENDAR_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex h-11 w-full shrink-0 items-center justify-center rounded-full bg-[#dcaa2d] px-6 text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b] sm:w-auto"
-          >
-            Kalender toevoegen
-          </a>
+          <div className="relative w-full shrink-0 sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setCalendarMenuOpen((open) => !open)}
+              aria-expanded={calendarMenuOpen}
+              aria-haspopup="menu"
+              className="flex h-11 w-full items-center justify-center rounded-full bg-[#dcaa2d] px-6 text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b] sm:w-auto"
+            >
+              Kalender toevoegen
+            </button>
+
+            {calendarMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-full min-w-[230px] overflow-hidden rounded-2xl border border-[#dcaa2d]/40 bg-[#111] p-2 text-left shadow-[0_15px_35px_rgba(0,0,0,0.65)] sm:w-[240px]"
+              >
+                <a
+                  href={AJONISTA_GOOGLE_CALENDAR_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  role="menuitem"
+                  onClick={() => setCalendarMenuOpen(false)}
+                  className="block rounded-xl px-4 py-3 text-sm font-black text-white transition hover:bg-[#dcaa2d] hover:text-black"
+                >
+                  Google Agenda
+                </a>
+
+                <a
+                  href={AJONISTA_APPLE_CALENDAR_LINK}
+                  role="menuitem"
+                  onClick={() => setCalendarMenuOpen(false)}
+                  className="block rounded-xl px-4 py-3 text-sm font-black text-white transition hover:bg-[#dcaa2d] hover:text-black"
+                >
+                  Apple Agenda
+                </a>
+
+                <a
+                  href={AJONISTA_ICAL_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  role="menuitem"
+                  onClick={() => setCalendarMenuOpen(false)}
+                  className="block rounded-xl px-4 py-3 text-sm font-black text-white transition hover:bg-[#dcaa2d] hover:text-black"
+                >
+                  Outlook / andere agenda
+                </a>
+              </div>
+            )}
+          </div>
         </div>
 
+        {/* Individuele events */}
         <div className="space-y-3 sm:space-y-5">
           {events.map((event, index) => (
             <div
@@ -621,13 +667,13 @@ function App() {
                   )}
                 </div>
 
-                <div className="mt-4 flex flex-col items-center gap-2">
+                <div className="mt-4 flex flex-col items-center gap-2 sm:mt-0">
                   {maakAgendaLink(event) && (
                     <a
                       href={maakAgendaLink(event)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105"
+                      className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b]"
                     >
                       Agenda
                     </a>
@@ -638,7 +684,7 @@ function App() {
                       href={event.facebook_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105"
+                      className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b]"
                     >
                       Event bekijken
                     </a>
@@ -649,7 +695,7 @@ function App() {
                       href={event.fotoalbum}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105"
+                      className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b]"
                     >
                       Foto&apos;s bekijken
                     </a>
@@ -659,6 +705,12 @@ function App() {
             </div>
           ))}
         </div>
+
+        {events.length === 0 && (
+          <p className="mt-12 text-center text-white/60">
+            Er zijn momenteel geen komende events.
+          </p>
+        )}
       </div>
     </div>
   </PageBackground>
