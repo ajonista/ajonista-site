@@ -20,12 +20,19 @@ import {
   FaPhoneAlt,
   FaGraduationCap,
   FaPen,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 
 /* =========================
    Helpers
 ========================= */
+const AJONISTA_CALENDAR_ID =
+  "4449993a4bdfc8fbe04fba2e905cb722a0325af20297a087c94cbcff1f25abd9@group.calendar.google.com";
+
+const AJONISTA_CALENDAR_LINK = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(
+  AJONISTA_CALENDAR_ID
+)}`;
 
 function formatDatum(datum) {
   const date = new Date(datum);
@@ -541,94 +548,121 @@ function App() {
           Events
       ========================= */}
 
-      {page === "events" && (
-        <PageBackground variant="events">
-          <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-            <div className="mx-auto max-w-6xl">
-              <PageHeader title="Events" subtitle="Komende events" />
+     {page === "events" && (
+  <PageBackground variant="events">
+    <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+      <div className="mx-auto max-w-6xl">
+        <PageHeader title="Events" subtitle="Komende events" />
 
-              <div className="space-y-3 sm:space-y-5">
-                {events.map((event, index) => (
-                  <div
-                    key={event.id}
-                    className="rounded-2xl border border-[#dcaa2d]/25 bg-black/60 p-4 shadow-[0_12px_28px_rgba(0,0,0,0.40)] backdrop-blur-xl sm:grid sm:grid-cols-[130px_1fr] sm:gap-5 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-0"
-                  >
-                    <div className="mb-3 flex items-center justify-between sm:mb-0 sm:grid sm:min-h-[140px] sm:place-items-center sm:rounded-3xl sm:border sm:border-[#dcaa2d]/40 sm:bg-black/70">
-                      <span className="text-3xl font-black text-[#dcaa2d] sm:text-5xl">
-                        {formatDatum(event.datum)}
-                      </span>
+        <div className="mx-auto mb-8 flex max-w-3xl flex-col items-center justify-between gap-4 rounded-2xl border border-[#dcaa2d]/35 bg-black/60 p-4 text-center shadow-[0_12px_28px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:flex-row sm:p-5 sm:text-left">
+          <div className="flex items-center gap-4">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#dcaa2d] text-lg text-black">
+              <FaCalendarAlt />
+            </div>
 
-                      {index === 0 && (
-                        <span className="rounded-full bg-[#dcaa2d] px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-black sm:hidden">
-                          Volgende
-                        </span>
-                      )}
-                    </div>
+            <div>
+              <h3 className="font-black text-white">
+                Mis geen enkel event
+              </h3>
 
-                    <div className="sm:flex sm:min-h-[140px] sm:items-center sm:justify-between sm:gap-8 sm:rounded-3xl sm:border sm:border-[#dcaa2d]/35 sm:bg-white/[0.04] sm:p-8 sm:backdrop-blur-xl">
-                      <div>
-                        <p className="mb-1 text-[11px] font-black uppercase tracking-[0.15em] text-[#dcaa2d] sm:text-xs">
-                          {event.tijd} • {event.locatie}
-                        </p>
-
-                        <h3 className="mb-1 text-xl font-black text-white sm:text-4xl">
-                          {event.titel}
-                        </h3>
-
-                        <p className="text-sm leading-relaxed text-white/60 sm:text-base">
-                          {event.beschrijving ||
-                            "Meer informatie volgt binnenkort"}
-                        </p>
-
-                        {index === 0 && (
-                          <span className="mt-4 hidden rounded-full bg-[#dcaa2d] px-4 py-2 text-xs font-black uppercase tracking-wider text-black sm:inline-flex">
-                            Eerstvolgende event
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="mt-4 flex flex-col items-center gap-2">
-                        {maakAgendaLink(event) && (
-                          <a
-                            href={maakAgendaLink(event)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105"
-                          >
-                            Agenda
-                          </a>
-                        )}
-
-                        {event.facebook_link && (
-                          <a
-                            href={event.facebook_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105"
-                          >
-                            Event bekijken
-                          </a>
-                        )}
-
-                        {event.fotoalbum && (
-                          <a
-                            href={event.fotoalbum}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105"
-                          >
-                            Foto's bekijken
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <p className="text-sm text-white/60">
+                Voeg de volledige Ajonista-agenda toe.
+              </p>
             </div>
           </div>
-        </PageBackground>
-      )}
+
+          <a
+            href={AJONISTA_CALENDAR_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-11 w-full shrink-0 items-center justify-center rounded-full bg-[#dcaa2d] px-6 text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b] sm:w-auto"
+          >
+            Kalender toevoegen
+          </a>
+        </div>
+
+        <div className="space-y-3 sm:space-y-5">
+          {events.map((event, index) => (
+            <div
+              key={event.id}
+              className="rounded-2xl border border-[#dcaa2d]/25 bg-black/60 p-4 shadow-[0_12px_28px_rgba(0,0,0,0.40)] backdrop-blur-xl sm:grid sm:grid-cols-[130px_1fr] sm:gap-5 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-0"
+            >
+              <div className="mb-3 flex items-center justify-between sm:mb-0 sm:grid sm:min-h-[140px] sm:place-items-center sm:rounded-3xl sm:border sm:border-[#dcaa2d]/40 sm:bg-black/70">
+                <span className="text-3xl font-black text-[#dcaa2d] sm:text-5xl">
+                  {formatDatum(event.datum)}
+                </span>
+
+                {index === 0 && (
+                  <span className="rounded-full bg-[#dcaa2d] px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-black sm:hidden">
+                    Volgende
+                  </span>
+                )}
+              </div>
+
+              <div className="sm:flex sm:min-h-[140px] sm:items-center sm:justify-between sm:gap-8 sm:rounded-3xl sm:border sm:border-[#dcaa2d]/35 sm:bg-white/[0.04] sm:p-8 sm:backdrop-blur-xl">
+                <div>
+                  <p className="mb-1 text-[11px] font-black uppercase tracking-[0.15em] text-[#dcaa2d] sm:text-xs">
+                    {event.tijd} • {event.locatie}
+                  </p>
+
+                  <h3 className="mb-1 text-xl font-black text-white sm:text-4xl">
+                    {event.titel}
+                  </h3>
+
+                  <p className="text-sm leading-relaxed text-white/60 sm:text-base">
+                    {event.beschrijving ||
+                      "Meer informatie volgt binnenkort"}
+                  </p>
+
+                  {index === 0 && (
+                    <span className="mt-4 hidden rounded-full bg-[#dcaa2d] px-4 py-2 text-xs font-black uppercase tracking-wider text-black sm:inline-flex">
+                      Eerstvolgende event
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  {maakAgendaLink(event) && (
+                    <a
+                      href={maakAgendaLink(event)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105"
+                    >
+                      Agenda
+                    </a>
+                  )}
+
+                  {event.facebook_link && (
+                    <a
+                      href={event.facebook_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105"
+                    >
+                      Event bekijken
+                    </a>
+                  )}
+
+                  {event.fotoalbum && (
+                    <a
+                      href={event.fotoalbum}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105"
+                    >
+                      Foto&apos;s bekijken
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </PageBackground>
+)}
 
       {/* =========================
           't Ajointjen overzicht
