@@ -690,11 +690,6 @@ useEffect(() => {
                     {event.titel}
                   </h3>
 
-                  <p className="text-sm leading-relaxed text-white/60 sm:text-base">
-                    {event.beschrijving ||
-                      "Meer informatie volgt binnenkort"}
-                  </p>
-
                   {index === 0 && (
                     <span className="mt-4 hidden rounded-full bg-[#dcaa2d] px-4 py-2 text-xs font-black uppercase tracking-wider text-black sm:inline-flex">
                       Eerstvolgende event
