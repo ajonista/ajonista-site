@@ -134,52 +134,197 @@ function PageHeader({ title, subtitle }) {
     </div>
   );
 }
+function LyricsLine({
+  text,
+  sentence,
+  secondSentence = null,
+  currentTime,
+  jumpToLine,
+  bis = false,
+}) {
+  if (!sentence) return null;
 
+  const firstStart = Number(sentence.start);
+  const firstEnd = Number(sentence.end);
+
+  const hasSecondPass = !!secondSentence;
+
+  const secondStart = hasSecondPass
+    ? Number(secondSentence.start)
+    : null;
+
+  const secondEnd = hasSecondPass
+    ? Number(secondSentence.end)
+    : null;
+
+  const isFirstPass =
+    currentTime >= firstStart &&
+    currentTime <= firstEnd;
+
+  const isSecondPass =
+    hasSecondPass &&
+    currentTime >= secondStart &&
+    currentTime <= secondEnd;
+
+  const isActive = isFirstPass || isSecondPass;
+
+  return (
+    <div
+      onClick={() => jumpToLine(firstStart)}
+      className={`
+        mb-2 cursor-pointer text-lg leading-relaxed sm:text-xl
+        transition-all duration-200
+        ${
+          isSecondPass
+            ? "font-black text-[#dcaa2d] drop-shadow-[0_0_9px_rgba(220,170,45,0.8)]"
+            : isFirstPass
+            ? "font-black text-[#f3d98a]"
+            : "text-white"
+        }
+      `}
+    >
+      <span>{text.replace(/\s*\(bis\)\s*$/i, "")}</span>
+
+      {bis && (
+        <span
+          className={
+            isSecondPass
+              ? "ml-2 font-black text-[#dcaa2d]"
+              : isActive
+              ? "ml-2 text-[#f3d98a]"
+              : "ml-2 text-white/40"
+          }
+        >
+          (bis)
+        </span>
+      )}
+    </div>
+  );
+}
 /* =========================
    App
 ========================= */
 
 function App() {
- const [page, setPage] = useState("home");
-const [menuOpen, setMenuOpen] = useState(false);
-const [selectedMember, setSelectedMember] = useState(null);
-const [events, setEvents] = useState([]);
-const [praesidiumData, setPraesidiumData] = useState([]);
-const [showSuccess, setShowSuccess] = useState(false);
+  const [page, setPage] = useState("home");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [praesidiumData, setPraesidiumData] = useState([]);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-const [clubbladen, setClubbladen] = useState([]);
-const [selectedClubblad, setSelectedClubblad] = useState(null);
-const [filterAcademiejaar, setFilterAcademiejaar] = useState("Alle");
+  const [clubbladen, setClubbladen] = useState([]);
+  const [selectedClubblad, setSelectedClubblad] = useState(null);
+  const [filterAcademiejaar, setFilterAcademiejaar] = useState("Alle");
 
-const [calendarMenuOpen, setCalendarMenuOpen] = useState(false);
-const calendarMenuRef = useRef(null);
+  const [calendarMenuOpen, setCalendarMenuOpen] = useState(false);
+  const calendarMenuRef = useRef(null);
 
+  // =========================================================
+  // CLUBLIED
+  // =========================================================
+
+  const audioRef = useRef(null);
+
+const [sentenceData, setSentenceData] = useState([]);
+const [currentTime, setCurrentTime] = useState(0);
+
+// JSON met zinnen laden
 useEffect(() => {
-  function handleClickOutside(event) {
-    if (
-      calendarMenuRef.current &&
-      !calendarMenuRef.current.contains(event.target)
-    ) {
-      setCalendarMenuOpen(false);
+  async function laadLyrics() {
+    try {
+      const response = await fetch("/clublied.json");
+
+      if (!response.ok) {
+        throw new Error(
+          "clublied.json kon niet geladen worden"
+        );
+      }
+
+      const data = await response.json();
+
+      if (!Array.isArray(data.sentences)) {
+        throw new Error(
+          "clublied.json bevat geen geldige 'sentences' array"
+        );
+      }
+
+      const sortedSentences = [...data.sentences].sort(
+        (a, b) => Number(a.start) - Number(b.start)
+      );
+
+      setSentenceData(sortedSentences);
+    } catch (error) {
+      console.error("Fout bij laden van lyrics:", error);
+      setSentenceData([]);
     }
   }
 
-  document.addEventListener("mousedown", handleClickOutside);
-  document.addEventListener("touchstart", handleClickOutside);
-
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-    document.removeEventListener("touchstart", handleClickOutside);
-  };
+  laadLyrics();
 }, []);
 
- useEffect(() => {
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
-}, [page]); useEffect(() => {
-  window.scrollTo(0, 0);
-}, [page]);
+// Huidige tijd van de MP3 volgen
+const handleTimeUpdate = () => {
+  const audio = audioRef.current;
 
+  if (!audio) return;
+
+  setCurrentTime(audio.currentTime);
+};
+
+// Naar een zin/regel springen
+const jumpToLine = (time) => {
+  const audio = audioRef.current;
+
+  if (!audio) return;
+
+  const targetTime = Number(time);
+
+  if (Number.isNaN(targetTime)) return;
+
+  audio.currentTime = Math.max(0, targetTime);
+
+  audio.play().catch((error) => {
+    console.error("Audio kon niet starten:", error);
+  });
+};
+
+  // =========================================================
+  // KALENDERMENU
+  // =========================================================
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        calendarMenuRef.current &&
+        !calendarMenuRef.current.contains(event.target)
+      ) {
+        setCalendarMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, []);
+
+  // =========================================================
+  // SCROLL NAAR BOVEN BIJ PAGINAWISSEL
+  // =========================================================
+
+  useEffect(() => {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }, [page]);
+
+  // =========================================================
+  // SUPABASE DATA
+  // =========================================================
 
   useEffect(() => {
     async function laadData() {
@@ -193,12 +338,15 @@ useEffect(() => {
         .select("*")
         .order("volgorde", { ascending: true });
 
-      const { data: clubbladenData, error: clubbladenError } = await supabase
-        .from("'t_ajointjen")
-        .select("*")
-        .order("volgorde", { ascending: true });
+      const { data: clubbladenData, error: clubbladenError } =
+        await supabase
+          .from("'t_ajointjen")
+          .select("*")
+          .order("volgorde", { ascending: true });
 
-      if (clubbladenError) console.error("Clubbladen fout:", clubbladenError);
+      if (clubbladenError) {
+        console.error("Clubbladen fout:", clubbladenError);
+      }
 
       setEvents(eventsData || []);
       setPraesidiumData(praesidiumData || []);
@@ -208,9 +356,17 @@ useEffect(() => {
     laadData();
   }, []);
 
+  // =========================================================
+  // CLUBBLAD FILTER
+  // =========================================================
+
   const academiejaren = [
     "Alle",
-    ...new Set(clubbladen.map((blad) => blad.academiejaar).filter(Boolean)),
+    ...new Set(
+      clubbladen
+        .map((blad) => blad.academiejaar)
+        .filter(Boolean)
+    ),
   ];
 
   const gefilterdeClubbladen = clubbladen.filter((blad) => {
@@ -220,6 +376,10 @@ useEffect(() => {
     );
   });
 
+  // =========================================================
+  // PAGINANAVIGATIE
+  // =========================================================
+
   const goToPage = (newPage) => {
     setPage(newPage);
     setMenuOpen(false);
@@ -227,7 +387,7 @@ useEffect(() => {
   };
 
   return (
-  <main>
+    <main>
       {/* =========================
           Navbar
       ========================= */}
@@ -472,112 +632,240 @@ useEffect(() => {
           Clublied
       ========================= */}
 
-      {page === "clublied" && (
-        <PageBackground variant="clublied">
-          <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-            <div className="mx-auto max-w-6xl">
-              <PageHeader
-                title="Clublied"
-                subtitle='Het clublied van Ajonista is op de wijze van "De Boemlala".'
-              />
+   {page === "clublied" && (
+  <PageBackground variant="clublied">
+    <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+      <div className="mx-auto max-w-6xl">
+        <PageHeader
+          title="Clublied"
+          subtitle='Het clublied van Ajonista is op de wijze van "De Boemlala".'
+        />
 
-              <div className="mx-auto mb-10 max-w-3xl rounded-3xl border border-[#dcaa2d]/30 bg-black/50 p-5 backdrop-blur-md">
-                <p className="mb-3 text-center text-sm font-black uppercase tracking-[0.16em] text-[#dcaa2d]">
-                  Beluister het clublied
-                </p>
+        {/* Muziekspeler */}
+        <div className="mx-auto mb-8 max-w-3xl rounded-3xl border border-[#dcaa2d]/30 bg-black/50 p-5 shadow-[0_15px_40px_rgba(0,0,0,0.35)] backdrop-blur-md">
+          <p className="mb-3 text-center text-sm font-black uppercase tracking-[0.16em] text-[#dcaa2d]">
+            Beluister het clublied
+          </p>
 
-                <audio controls className="w-full">
-                  <source src={clubliedMp3} type="audio/mpeg" />
-                  Je browser ondersteunt geen audio-element.
-                </audio>
-              </div>
+          <audio
+            ref={audioRef}
+            controls
+            onTimeUpdate={handleTimeUpdate}
+            onEnded={() => setCurrentTime(0)}
+            className="w-full"
+          >
+            <source src={clubliedMp3} type="audio/mpeg" />
+            Je browser ondersteunt geen audio-element.
+          </audio>
+        </div>
 
-              <div className="mx-auto max-w-4xl rounded-[1.8rem] border border-[#dcaa2d]/30 bg-black/40 p-6 text-left backdrop-blur-md md:p-10">
-                <div className="space-y-8 text-lg font-bold leading-8 md:text-xl">
-                  <p>
-                    <span className="mb-2 block text-2xl font-black text-[#dcaa2d]">
-                      (Strofe 1)
-                    </span>
-                    Ajonista, moet naar hois toe gaan,
-                    <br />
-                    de pinten die zijn op (bis)
-                    <br />
-                    Zoin ze op, lotj ze op
-                    <br />
-                    Een nief vat slaan we op de kop
-                  </p>
+        {/* Songtekst */}
+        <div className="mt-10 rounded-3xl border border-[#dcaa2d]/40 bg-black/40 px-6 py-8 shadow-[0_15px_40px_rgba(0,0,0,0.30)] backdrop-blur-md sm:px-8 sm:py-10">
+          <div className="mb-8 border-b border-[#dcaa2d]/20 pb-5">
+            <h2 className="text-xl font-black uppercase tracking-[0.08em] text-[#dcaa2d]">
+              Volledige songtekst
+            </h2>
 
-                  <p>
-                    <span className="mb-2 block text-2xl font-black text-[#dcaa2d]">
-                      (Refrein)
-                    </span>
-                    En Ajonista ging ni naar hois (bis)
-                    <br />
-                    Want Ajonista is weer op de zwier,
-                    <br />
-                    op de zwier, op de zwier
-                    <br />
-                    Ajonista is weer op de zwier met een vat bier
-                  </p>
-
-                  <p>
-                    <span className="mb-2 block text-2xl font-black text-[#dcaa2d]">
-                      (Strofe 2)
-                    </span>
-                    Ajonista, moet naar den toeig gaan,
-                    <br />
-                    au keel sta weeral droeig (bis)
-                    <br />
-                    Is ze droeig, lotj ze droeig
-                    <br />
-                    De volgende sta al op den toeig
-                  </p>
-
-                  <p>
-                    <span className="mb-2 block text-2xl font-black text-[#dcaa2d]">
-                      (Refrein)
-                    </span>
-                    En Ajonista ging naar den toeig (bis)
-                    <br />
-                    Want Ajonista is weer op de zwier,
-                    <br />
-                    op de zwier, op de zwier
-                    <br />
-                    Ajonista is weer op de zwier met een vat bier
-                  </p>
-
-                  <p>
-                    <span className="mb-2 block text-2xl font-black text-[#dcaa2d]">
-                      (Strofe 3)
-                    </span>
-                    Ajonista, moet naar hois toe gaan,
-                    <br />
-                    au vat is weeral op (bis)
-                    <br />
-                    Is het op, lotj het op
-                    <br />
-                    Sebiet kuiste mijne spaav weer op
-                  </p>
-
-                  <p>
-                    <span className="mb-2 block text-2xl font-black text-[#dcaa2d]">
-                      (Refrein)
-                    </span>
-                    En Ajonista ging naar hois (bis)
-                    <br />
-                    Want Ajonista was weer op de zwier,
-                    <br />
-                    op de zwier, op de zwier
-                    <br />
-                    Ajonista was weer op de zwier met teveel bier
-                  </p>
-                </div>
-              </div>
-            </div>
+            <p className="mt-2 text-sm text-white/50">
+              Tijdens het afspelen wordt elke gezongen zin automatisch aangeduid.
+            </p>
           </div>
-        </PageBackground>
-      )}
 
+          {sentenceData.length > 0 ? (
+            <div className="space-y-8">
+
+              {/* STROFE 1 */}
+              <section>
+                <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
+                  Strofe 1
+                </h3>
+
+                <LyricsLine
+                  text="Ajonista, moet naar hois toe gaan, de pinten die zijn op (bis)"
+                  sentence={sentenceData[0]}
+                  secondSentence={sentenceData[1]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                  bis
+                />
+
+                <LyricsLine
+                  text="Zoin ze op, lotj ze op"
+                  sentence={sentenceData[2]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                />
+
+                <LyricsLine
+                  text="Een nief vat slaan we op de kop"
+                  sentence={sentenceData[3]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                />
+              </section>
+
+              {/* REFREIN 1 */}
+              <section>
+                <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
+                  Refrein
+                </h3>
+
+                <LyricsLine
+                  text="En Ajonista ging ni naar hois (bis)"
+                  sentence={sentenceData[4]}
+                  secondSentence={sentenceData[5]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                  bis
+                />
+
+                <LyricsLine
+                  text="Want Ajonista is weer op de zwier, op de zwier, op de zwier"
+                  sentence={sentenceData[6]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                />
+
+                <LyricsLine
+                  text="Ajonista is weer op de zwier met een vat bier"
+                  sentence={sentenceData[7]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                />
+              </section>
+
+              {/* STROFE 2 */}
+              <section>
+                <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
+                  Strofe 2
+                </h3>
+
+                <LyricsLine
+                  text="Ajonista, moet naar den toeig gaan, au keel sta weeral droeig (bis)"
+                  sentence={sentenceData[8]}
+                  secondSentence={sentenceData[9]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                  bis
+                />
+
+                <LyricsLine
+                  text="Is ze droeig, lotj ze droeig"
+                  sentence={sentenceData[10]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                />
+
+                <LyricsLine
+                  text="De volgende sta al op den toeig"
+                  sentence={sentenceData[11]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                />
+              </section>
+
+              {/* REFREIN 2 */}
+              <section>
+                <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
+                  Refrein
+                </h3>
+
+                <LyricsLine
+                  text="En Ajonista ging naar den toeig (bis)"
+                  sentence={sentenceData[12]}
+                  secondSentence={sentenceData[13]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                  bis
+                />
+
+                <LyricsLine
+                  text="Want Ajonista is weer op de zwier, op de zwier, op de zwier"
+                  sentence={sentenceData[14]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                />
+
+                <LyricsLine
+                  text="Ajonista is weer op de zwier met een vat bier"
+                  sentence={sentenceData[15]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                />
+              </section>
+
+              {/* STROFE 3 */}
+              <section>
+                <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
+                  Strofe 3
+                </h3>
+
+                <LyricsLine
+                  text="Ajonista, moet naar hois toe gaan, au vat is weeral op (bis)"
+                  sentence={sentenceData[16]}
+                  secondSentence={sentenceData[17]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                  bis
+                />
+
+                <LyricsLine
+                  text="Is het op, lotj het op"
+                  sentence={sentenceData[18]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                />
+
+                <LyricsLine
+                  text="Sebiet kuiste mijne spaav weer op"
+                  sentence={sentenceData[19]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                />
+              </section>
+
+              {/* REFREIN 3 */}
+              <section>
+                <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
+                  Refrein
+                </h3>
+
+                <LyricsLine
+                  text="En Ajonista ging naar hois (bis)"
+                  sentence={sentenceData[20]}
+                  secondSentence={sentenceData[21]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                  bis
+                />
+
+                <LyricsLine
+                  text="Want Ajonista was weer op de zwier, op de zwier, op de zwier"
+                  sentence={sentenceData[22]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                />
+
+                <LyricsLine
+                  text="Ajonista was weer op de zwier met teveel bier"
+                  sentence={sentenceData[23]}
+                  currentTime={currentTime}
+                  jumpToLine={jumpToLine}
+                />
+              </section>
+            </div>
+          ) : (
+            <div className="flex min-h-[250px] items-center justify-center text-center">
+              <p className="font-black text-[#dcaa2d]">
+                Songtekst laden...
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </PageBackground>
+)}
       {/* =========================
     Events
 ========================= */}
