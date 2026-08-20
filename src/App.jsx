@@ -407,45 +407,48 @@ const jumpToLine = (time) => {
         </button>
 
         {/* Menu */}
-        <div
-          className={`${
-            menuOpen ? "flex" : "hidden"
-          } absolute right-4 top-16 w-64 flex-col gap-2 rounded-3xl border border-[#dcaa2d]/55 bg-black/95 p-4 shadow-[0_10px_35px_rgba(0,0,0,0.65)] backdrop-blur-md md:static md:flex md:w-auto md:flex-row md:items-center md:gap-2 md:border-0 md:bg-transparent md:p-0 md:shadow-none`}
-        >
-          {[
-            "home",
-            "praesidium",
-            "clublied",
-            "events",
-            "t_ajointjen",
-            "lidworden",
-            "statuten",
-          ].map((item) => (
-            <button
-              key={item}
-              onClick={() => goToPage(item)}
-              className={`rounded-full border border-[#dcaa2d]/55 px-5 py-2 text-left text-sm font-extrabold tracking-wide transition hover:bg-[#dcaa2d]/20 hover:text-[#dcaa2d] md:text-center ${
-                page === item
-                  ? "bg-[#dcaa2d] text-black shadow-[0_0_20px_rgba(220,170,45,0.55)]"
-                  : "bg-transparent text-white"
-              }`}
-            >
-              {item === "lidworden"
-                ? "Lid worden"
-                : item === "statuten"
-                ? "Statuten"
-                : item === "praesidium"
-                ? "Praesidium"
-                : item === "clublied"
-                ? "Clublied"
-                : item === "events"
-                ? "Events"
-                : item === "t_ajointjen"
-                ? "'t Ajointjen"
-                : "Home"}
-            </button>
-          ))}
-        </div>
+<div
+  className={`${
+    menuOpen ? "flex" : "hidden"
+  } absolute right-4 top-16 w-64 flex-col gap-2 rounded-3xl border border-[#dcaa2d]/55 bg-black/95 p-4 shadow-[0_10px_35px_rgba(0,0,0,0.65)] backdrop-blur-md md:static md:flex md:w-auto md:flex-row md:items-center md:gap-2 md:border-0 md:bg-transparent md:p-0 md:shadow-none`}
+>
+  {[
+    "home",
+    "praesidium",
+    "clublied",
+    "events",
+    "t_ajointjen",
+    "lidworden",
+    "geschiedenis",
+    "statuten",
+  ].map((item) => (
+    <button
+      key={item}
+      onClick={() => goToPage(item)}
+      className={`rounded-full border border-[#dcaa2d]/55 px-5 py-2 text-left text-sm font-extrabold tracking-wide transition hover:bg-[#dcaa2d]/20 hover:text-[#dcaa2d] md:text-center ${
+        page === item
+          ? "bg-[#dcaa2d] text-black shadow-[0_0_20px_rgba(220,170,45,0.55)]"
+          : "bg-transparent text-white"
+      }`}
+    >
+      {item === "lidworden"
+        ? "Lid worden"
+        : item === "statuten"
+        ? "Statuten"
+        : item === "geschiedenis"
+        ? "Geschiedenis"
+        : item === "praesidium"
+        ? "Praesidium"
+        : item === "clublied"
+        ? "Clublied"
+        : item === "events"
+        ? "Events"
+        : item === "t_ajointjen"
+        ? "'t Ajointjen"
+        : "Home"}
+    </button>
+  ))}
+</div>
 
         {/* Socials desktop */}
         <div className="hidden items-center gap-2 md:flex">
@@ -1293,6 +1296,31 @@ const jumpToLine = (time) => {
           </div>
         </div>
       )}
+<>
+  {/* ==================== GESCHIEDENIS ==================== */}
+
+  {page === "geschiedenis" && (
+    <PageBackground variant="default">
+      <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+        <div className="mx-auto max-w-6xl">
+
+          {/* TITEL */}
+          <h1 className="mb-10 text-center text-4xl font-black uppercase tracking-[0.08em] text-[#dcaa2d] sm:text-5xl">
+            Geschiedenis
+          </h1>
+
+          {/* BINNENKORT */}
+          <div className="rounded-3xl border border-[#dcaa2d]/30 bg-black/45 px-6 py-20 text-center shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-md sm:px-10">
+            <p className="text-2xl font-black text-[#dcaa2d] sm:text-3xl">
+              Onze archeologen zijn nog diep aan het graven... ⛏️
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </PageBackground>
+  )}
+</>
 
       {/* =========================
           Statuten
