@@ -27,6 +27,7 @@ import { MdEmail } from "react-icons/md";
 /* =========================
    Helpers
 ========================= */
+
 const AJONISTA_CALENDAR_ID =
   "4449993a4bdfc8fbe04fba2e905cb722a0325af20297a087c94cbcff1f25abd9@group.calendar.google.com";
 
@@ -55,10 +56,38 @@ function formatDatum(datum) {
   return `${dag}/${maand}`;
 }
 
+/* =========================
+   Event datum / tijd
+========================= */
+
+function getEventStart(event) {
+  if (!event?.datum) return null;
+
+  let tijd = event.tijd;
+
+  /*
+    Als er geen tijd is of TBA staat,
+    beschouwen we het event als geldig
+    vanaf 00:00 op die dag.
+  */
+  if (!tijd || tijd === "TBA") {
+    tijd = "00:00";
+  }
+
+  const date = new Date(`${event.datum}T${tijd}:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date;
+}
+
 function maakAgendaLink(event) {
   if (!event.datum || !event.tijd || event.tijd === "TBA") return null;
 
   const start = new Date(`${event.datum}T${event.tijd}`);
+
   if (Number.isNaN(start.getTime())) return null;
 
   const einde = new Date(start.getTime() + 3 * 60 * 60 * 1000);
@@ -72,6 +101,7 @@ function maakAgendaLink(event) {
     event.beschrijving || ""
   )}&location=${encodeURIComponent(event.locatie || "")}`;
 }
+
 /* =========================
    Achtergrond per pagina
 ========================= */
@@ -80,14 +110,19 @@ function PageBackground({ children, variant = "default" }) {
   const variants = {
     events:
       "bg-[radial-gradient(circle_at_50%_8%,rgba(220,170,45,0.32),transparent_38%),radial-gradient(circle_at_50%_55%,rgba(220,170,45,0.10),transparent_45%),linear-gradient(180deg,#050400_0%,#010101_52%,#0b0702_100%)]",
+
     praesidium:
       "bg-[radial-gradient(circle_at_50%_8%,rgba(220,170,45,0.34),transparent_38%),radial-gradient(circle_at_50%_55%,rgba(220,170,45,0.10),transparent_45%),linear-gradient(180deg,#050400_0%,#010101_52%,#0b0702_100%)]",
+
     clublied:
       "bg-[radial-gradient(circle_at_50%_8%,rgba(220,170,45,0.36),transparent_38%),radial-gradient(circle_at_50%_55%,rgba(220,170,45,0.10),transparent_45%),linear-gradient(180deg,#050400_0%,#010101_52%,#0b0702_100%)]",
+
     lidworden:
       "bg-[radial-gradient(circle_at_50%_8%,rgba(220,170,45,0.34),transparent_38%),radial-gradient(circle_at_50%_48%,rgba(220,170,45,0.12),transparent_45%),linear-gradient(180deg,#050400_0%,#010101_52%,#0b0702_100%)]",
+
     statuten:
       "bg-[radial-gradient(circle_at_50%_8%,rgba(220,170,45,0.32),transparent_38%),radial-gradient(circle_at_50%_55%,rgba(220,170,45,0.10),transparent_45%),linear-gradient(180deg,#050400_0%,#010101_52%,#0b0702_100%)]",
+
     default: "bg-[#010101]",
   };
 
@@ -97,13 +132,10 @@ function PageBackground({ children, variant = "default" }) {
         variants[variant] || variants.default
       }`}
     >
-      {/* Grid overlay */}
       <div className="pointer-events-none absolute inset-0 hidden opacity-[0.05] sm:block bg-[linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px)] bg-[size:42px_42px]" />
 
-      {/* Glow */}
       <div className="pointer-events-none absolute left-1/2 top-16 h-72 w-72 -translate-x-1/2 rounded-full bg-[#dcaa2d]/10 blur-3xl sm:top-24" />
 
-      {/* Groot schild rechts */}
       <img
         src={schildFoto}
         alt=""
@@ -116,7 +148,7 @@ function PageBackground({ children, variant = "default" }) {
 }
 
 /* =========================
-   Gelijke titel + ondertitel
+   Titel + ondertitel
 ========================= */
 
 function PageHeader({ title, subtitle }) {
@@ -134,6 +166,11 @@ function PageHeader({ title, subtitle }) {
     </div>
   );
 }
+
+/* =========================
+   Lyrics
+========================= */
+
 function LyricsLine({
   text,
   sentence,
@@ -201,6 +238,7 @@ function LyricsLine({
     </div>
   );
 }
+
 /* =========================
    App
 ========================= */
@@ -209,89 +247,138 @@ function App() {
   const [page, setPage] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
+
   const [events, setEvents] = useState([]);
   const [praesidiumData, setPraesidiumData] = useState([]);
+
   const [showSuccess, setShowSuccess] = useState(false);
 
   const [clubbladen, setClubbladen] = useState([]);
   const [selectedClubblad, setSelectedClubblad] = useState(null);
-  const [filterAcademiejaar, setFilterAcademiejaar] = useState("Alle");
+  const [filterAcademiejaar, setFilterAcademiejaar] =
+    useState("Alle");
 
-  const [calendarMenuOpen, setCalendarMenuOpen] = useState(false);
+  const [calendarMenuOpen, setCalendarMenuOpen] =
+    useState(false);
+
   const calendarMenuRef = useRef(null);
 
-  // =========================================================
-  // CLUBLIED
-  // =========================================================
+  /*
+    Dit zorgt ervoor dat "eerstvolgende"
+    ook verandert wanneer iemand de website
+    lang open laat staan.
+  */
+  const [nu, setNu] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNu(new Date());
+    }, 60 * 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  /* =========================
+     Eerstvolgende event bepalen
+  ========================= */
+
+  const toekomstigeEvents = events
+    .map((event) => ({
+      event,
+      start: getEventStart(event),
+    }))
+    .filter(
+      ({ start }) =>
+        start &&
+        start.getTime() >= nu.getTime()
+    )
+    .sort(
+      (a, b) =>
+        a.start.getTime() - b.start.getTime()
+    );
+
+  const eerstvolgendeEventId =
+    toekomstigeEvents.length > 0
+      ? toekomstigeEvents[0].event.id
+      : null;
+
+  /* =========================================================
+     CLUBLIED
+  ========================================================= */
 
   const audioRef = useRef(null);
 
-const [sentenceData, setSentenceData] = useState([]);
-const [currentTime, setCurrentTime] = useState(0);
+  const [sentenceData, setSentenceData] = useState([]);
+  const [currentTime, setCurrentTime] = useState(0);
 
-// JSON met zinnen laden
-useEffect(() => {
-  async function laadLyrics() {
-    try {
-      const response = await fetch("/clublied.json");
+  useEffect(() => {
+    async function laadLyrics() {
+      try {
+        const response = await fetch("/clublied.json");
 
-      if (!response.ok) {
-        throw new Error(
-          "clublied.json kon niet geladen worden"
+        if (!response.ok) {
+          throw new Error(
+            "clublied.json kon niet geladen worden"
+          );
+        }
+
+        const data = await response.json();
+
+        if (!Array.isArray(data.sentences)) {
+          throw new Error(
+            "clublied.json bevat geen geldige 'sentences' array"
+          );
+        }
+
+        const sortedSentences = [...data.sentences].sort(
+          (a, b) =>
+            Number(a.start) - Number(b.start)
         );
-      }
 
-      const data = await response.json();
-
-      if (!Array.isArray(data.sentences)) {
-        throw new Error(
-          "clublied.json bevat geen geldige 'sentences' array"
+        setSentenceData(sortedSentences);
+      } catch (error) {
+        console.error(
+          "Fout bij laden van lyrics:",
+          error
         );
+
+        setSentenceData([]);
       }
-
-      const sortedSentences = [...data.sentences].sort(
-        (a, b) => Number(a.start) - Number(b.start)
-      );
-
-      setSentenceData(sortedSentences);
-    } catch (error) {
-      console.error("Fout bij laden van lyrics:", error);
-      setSentenceData([]);
     }
-  }
 
-  laadLyrics();
-}, []);
+    laadLyrics();
+  }, []);
 
-// Huidige tijd van de MP3 volgen
-const handleTimeUpdate = () => {
-  const audio = audioRef.current;
+  const handleTimeUpdate = () => {
+    const audio = audioRef.current;
 
-  if (!audio) return;
+    if (!audio) return;
 
-  setCurrentTime(audio.currentTime);
-};
+    setCurrentTime(audio.currentTime);
+  };
 
-// Naar een zin/regel springen
-const jumpToLine = (time) => {
-  const audio = audioRef.current;
+  const jumpToLine = (time) => {
+    const audio = audioRef.current;
 
-  if (!audio) return;
+    if (!audio) return;
 
-  const targetTime = Number(time);
+    const targetTime = Number(time);
 
-  if (Number.isNaN(targetTime)) return;
+    if (Number.isNaN(targetTime)) return;
 
-  audio.currentTime = Math.max(0, targetTime);
+    audio.currentTime = Math.max(0, targetTime);
 
-  audio.play().catch((error) => {
-    console.error("Audio kon niet starten:", error);
-  });
-};
+    audio.play().catch((error) => {
+      console.error(
+        "Audio kon niet starten:",
+        error
+      );
+    });
+  };
 
-  // =========================================================
-  // KALENDERMENU
-  // =========================================================
+  /* =========================================================
+     KALENDERMENU
+  ========================================================= */
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -303,18 +390,32 @@ const jumpToLine = (time) => {
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    document.addEventListener(
+      "touchstart",
+      handleClickOutside
+    );
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+
+      document.removeEventListener(
+        "touchstart",
+        handleClickOutside
+      );
     };
   }, []);
 
-  // =========================================================
-  // SCROLL NAAR BOVEN BIJ PAGINAWISSEL
-  // =========================================================
+  /* =========================================================
+     SCROLL NAAR BOVEN
+  ========================================================= */
 
   useEffect(() => {
     document.documentElement.scrollTop = 0;
@@ -322,9 +423,9 @@ const jumpToLine = (time) => {
     window.scrollTo(0, 0);
   }, [page]);
 
-  // =========================================================
-  // SUPABASE DATA
-  // =========================================================
+  /* =========================================================
+     SUPABASE DATA
+  ========================================================= */
 
   useEffect(() => {
     async function laadData() {
@@ -338,15 +439,27 @@ const jumpToLine = (time) => {
         .select("*")
         .order("volgorde", { ascending: true });
 
-      const { data: clubbladenData, error: clubbladenError } =
-        await supabase
-          .from("'t_ajointjen")
-          .select("*")
-          .order("volgorde", { ascending: true });
+      const {
+        data: clubbladenData,
+        error: clubbladenError,
+      } = await supabase
+        .from("'t_ajointjen")
+        .select("*")
+        .order("volgorde", { ascending: true });
 
       if (clubbladenError) {
-        console.error("Clubbladen fout:", clubbladenError);
+        console.error(
+          "Clubbladen fout:",
+          clubbladenError
+        );
       }
+
+      /*
+        BELANGRIJK:
+        eventsData wordt NIET opnieuw gesorteerd.
+        Jouw Supabase "volgorde" blijft dus
+        exact behouden op de website.
+      */
 
       setEvents(eventsData || []);
       setPraesidiumData(praesidiumData || []);
@@ -356,9 +469,9 @@ const jumpToLine = (time) => {
     laadData();
   }, []);
 
-  // =========================================================
-  // CLUBBLAD FILTER
-  // =========================================================
+  /* =========================================================
+     CLUBBLAD FILTER
+  ========================================================= */
 
   const academiejaren = [
     "Alle",
@@ -369,16 +482,18 @@ const jumpToLine = (time) => {
     ),
   ];
 
-  const gefilterdeClubbladen = clubbladen.filter((blad) => {
-    return (
-      filterAcademiejaar === "Alle" ||
-      blad.academiejaar === filterAcademiejaar
-    );
-  });
+  const gefilterdeClubbladen = clubbladen.filter(
+    (blad) => {
+      return (
+        filterAcademiejaar === "Alle" ||
+        blad.academiejaar === filterAcademiejaar
+      );
+    }
+  );
 
-  // =========================================================
-  // PAGINANAVIGATIE
-  // =========================================================
+  /* =========================================================
+     PAGINANAVIGATIE
+  ========================================================= */
 
   const goToPage = (newPage) => {
     setPage(newPage);
@@ -393,12 +508,17 @@ const jumpToLine = (time) => {
       ========================= */}
 
       <nav className="fixed left-0 top-0 z-[1000] flex w-full items-center justify-between border-b border-[#dcaa2d]/30 bg-black/55 px-4 py-2 shadow-[0_3px_14px_rgba(0,0,0,0.35)] backdrop-blur-md md:px-6 md:py-3">
-        {/* Logo links */}
-        <button onClick={() => goToPage("home")} className="flex items-center">
-          <img src={schildFoto} alt="Ajonista" className="h-10 w-auto md:h-11" />
+        <button
+          onClick={() => goToPage("home")}
+          className="flex items-center"
+        >
+          <img
+            src={schildFoto}
+            alt="Ajonista"
+            className="h-10 w-auto md:h-11"
+          />
         </button>
 
-        {/* Hamburger mobiel */}
         <button
           className="rounded-full bg-[#dcaa2d] px-4 py-2 text-lg font-black text-black md:hidden"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -406,51 +526,49 @@ const jumpToLine = (time) => {
           ☰
         </button>
 
-        {/* Menu */}
-<div
-  className={`${
-    menuOpen ? "flex" : "hidden"
-  } absolute right-4 top-16 w-64 flex-col gap-2 rounded-3xl border border-[#dcaa2d]/55 bg-black/95 p-4 shadow-[0_10px_35px_rgba(0,0,0,0.65)] backdrop-blur-md md:static md:flex md:w-auto md:flex-row md:items-center md:gap-2 md:border-0 md:bg-transparent md:p-0 md:shadow-none`}
->
-  {[
-    "home",
-    "praesidium",
-    "clublied",
-    "events",
-    "t_ajointjen",
-    "lidworden",
-    "geschiedenis",
-    "statuten",
-  ].map((item) => (
-    <button
-      key={item}
-      onClick={() => goToPage(item)}
-      className={`rounded-full border border-[#dcaa2d]/55 px-5 py-2 text-left text-sm font-extrabold tracking-wide transition hover:bg-[#dcaa2d]/20 hover:text-[#dcaa2d] md:text-center ${
-        page === item
-          ? "bg-[#dcaa2d] text-black shadow-[0_0_20px_rgba(220,170,45,0.55)]"
-          : "bg-transparent text-white"
-      }`}
-    >
-      {item === "lidworden"
-        ? "Lid worden"
-        : item === "statuten"
-        ? "Statuten"
-        : item === "geschiedenis"
-        ? "Geschiedenis"
-        : item === "praesidium"
-        ? "Praesidium"
-        : item === "clublied"
-        ? "Clublied"
-        : item === "events"
-        ? "Events"
-        : item === "t_ajointjen"
-        ? "'t Ajointjen"
-        : "Home"}
-    </button>
-  ))}
-</div>
+        <div
+          className={`${
+            menuOpen ? "flex" : "hidden"
+          } absolute right-4 top-16 w-64 flex-col gap-2 rounded-3xl border border-[#dcaa2d]/55 bg-black/95 p-4 shadow-[0_10px_35px_rgba(0,0,0,0.65)] backdrop-blur-md md:static md:flex md:w-auto md:flex-row md:items-center md:gap-2 md:border-0 md:bg-transparent md:p-0 md:shadow-none`}
+        >
+          {[
+            "home",
+            "praesidium",
+            "clublied",
+            "events",
+            "t_ajointjen",
+            "lidworden",
+            "geschiedenis",
+            "statuten",
+          ].map((item) => (
+            <button
+              key={item}
+              onClick={() => goToPage(item)}
+              className={`rounded-full border border-[#dcaa2d]/55 px-5 py-2 text-left text-sm font-extrabold tracking-wide transition hover:bg-[#dcaa2d]/20 hover:text-[#dcaa2d] md:text-center ${
+                page === item
+                  ? "bg-[#dcaa2d] text-black shadow-[0_0_20px_rgba(220,170,45,0.55)]"
+                  : "bg-transparent text-white"
+              }`}
+            >
+              {item === "lidworden"
+                ? "Lid worden"
+                : item === "statuten"
+                ? "Statuten"
+                : item === "geschiedenis"
+                ? "Geschiedenis"
+                : item === "praesidium"
+                ? "Praesidium"
+                : item === "clublied"
+                ? "Clublied"
+                : item === "events"
+                ? "Events"
+                : item === "t_ajointjen"
+                ? "'t Ajointjen"
+                : "Home"}
+            </button>
+          ))}
+        </div>
 
-        {/* Socials desktop */}
         <div className="hidden items-center gap-2 md:flex">
           <a
             className="grid h-9 w-9 place-items-center rounded-full border border-[#dcaa2d]/65 bg-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
@@ -484,75 +602,78 @@ const jumpToLine = (time) => {
       ========================= */}
 
       {page === "home" && (
-  <section className="w-full bg-[#010101]">
-    {/* Mobile */}
-    <div className="pt-16 md:hidden">
-      <img
-        src={bannerMobile}
-        alt="Ajonista banner mobiel"
-        className="block w-full"
-      />
-    </div>
+        <section className="w-full bg-[#010101]">
+          <div className="pt-16 md:hidden">
+            <img
+              src={bannerMobile}
+              alt="Ajonista banner mobiel"
+              className="block w-full"
+            />
+          </div>
 
-    {/* Laptop */}
-    <div className="hidden pt-20 md:block xl:hidden">
-      <img
-        src={bannerLaptop}
-        alt="Ajonista banner laptop"
-        className="block w-full"
-      />
-    </div>
+          <div className="hidden pt-20 md:block xl:hidden">
+            <img
+              src={bannerLaptop}
+              alt="Ajonista banner laptop"
+              className="block w-full"
+            />
+          </div>
 
-    {/* Desktop */}
-    <div className="hidden pt-20 xl:block">
-      <img
-        src={bannerDesktop}
-        alt="Ajonista banner desktop"
-        className="block w-full"
-      />
-    </div>
-    </section>
-)}
-        {/* =========================
-            Praesidium
-        ========================= */}
+          <div className="hidden pt-20 xl:block">
+            <img
+              src={bannerDesktop}
+              alt="Ajonista banner desktop"
+              className="block w-full"
+            />
+          </div>
+        </section>
+      )}
 
-        {page === "praesidium" && (
-          <PageBackground variant="praesidium">
-            <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-              <div className="mx-auto max-w-6xl">
-                <PageHeader title="Huidig Praesidium" />
+      {/* =========================
+          Praesidium
+      ========================= */}
 
-                <div className="grid justify-items-center gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                  {praesidiumData.map((persoon) => (
-                    <button
-                      key={persoon.id}
-                      type="button"
-                      onClick={() => setSelectedMember(persoon)}
-                      className="group w-full max-w-[280px] cursor-pointer rounded-3xl border border-[#dcaa2d]/30 bg-black/60 p-6 text-center backdrop-blur-xl transition hover:-translate-y-1 hover:border-[#dcaa2d] active:scale-[0.98]"
-                    >
-                      <img
-                        src={persoon.foto_url}
-                        alt={persoon.naam}
-                        className="mx-auto mb-4 h-28 w-28 rounded-full border-2 border-[#dcaa2d] object-cover"
-                      />
+      {page === "praesidium" && (
+        <PageBackground variant="praesidium">
+          <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+            <div className="mx-auto max-w-6xl">
+              <PageHeader title="Huidig Praesidium" />
 
-                      <h3 className="mb-1 text-lg font-black text-[#dcaa2d]">
-                        {persoon.functie}
-                      </h3>
+              <div className="grid justify-items-center gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                {praesidiumData.map((persoon) => (
+                  <button
+                    key={persoon.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedMember(persoon)
+                    }
+                    className="group w-full max-w-[280px] cursor-pointer rounded-3xl border border-[#dcaa2d]/30 bg-black/60 p-6 text-center backdrop-blur-xl transition hover:-translate-y-1 hover:border-[#dcaa2d] active:scale-[0.98]"
+                  >
+                    <img
+                      src={persoon.foto_url}
+                      alt={persoon.naam}
+                      className="mx-auto mb-4 h-28 w-28 rounded-full border-2 border-[#dcaa2d] object-cover"
+                    />
 
-                      <p className="font-semibold text-white">{persoon.naam}</p>
+                    <h3 className="mb-1 text-lg font-black text-[#dcaa2d]">
+                      {persoon.functie}
+                    </h3>
 
-                      <p className="mt-3 text-xs font-bold uppercase tracking-wider text-[#dcaa2d] opacity-100 md:opacity-0 md:transition md:group-hover:opacity-100">
-                        Tik voor profiel
-                      </p>
-                    </button>
-                  ))}
-                </div>
+                    <p className="font-semibold text-white">
+                      {persoon.naam}
+                    </p>
+
+                    <p className="mt-3 text-xs font-bold uppercase tracking-wider text-[#dcaa2d] opacity-100 md:opacity-0 md:transition md:group-hover:opacity-100">
+                      Tik voor profiel
+                    </p>
+                  </button>
+                ))}
               </div>
             </div>
-          </PageBackground>
-        )}
+          </div>
+        </PageBackground>
+      )}
+
       {/* =========================
           Praesidium modal
       ========================= */}
@@ -560,14 +681,20 @@ const jumpToLine = (time) => {
       {selectedMember && (
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-          onClick={() => setSelectedMember(null)}
+          onClick={() =>
+            setSelectedMember(null)
+          }
         >
           <div
             className="relative w-full max-w-4xl overflow-hidden rounded-3xl bg-[#111]"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
           >
             <button
-              onClick={() => setSelectedMember(null)}
+              onClick={() =>
+                setSelectedMember(null)
+              }
               className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#dcaa2d] text-xl font-black text-black"
             >
               ×
@@ -594,27 +721,39 @@ const jumpToLine = (time) => {
                     <p className="text-xs font-black uppercase text-[#dcaa2d]">
                       Verjaardag
                     </p>
-                    <p>{selectedMember.verjaardag}</p>
+                    <p>
+                      {selectedMember.verjaardag}
+                    </p>
                   </div>
 
                   <div>
                     <p className="text-xs font-black uppercase text-[#dcaa2d]">
-                      {selectedMember.studie ? "Studie" : "Werk"}
+                      {selectedMember.studie
+                        ? "Studie"
+                        : "Werk"}
                     </p>
-                    <p>{selectedMember.studie || selectedMember.werk}</p>
+
+                    <p>
+                      {selectedMember.studie ||
+                        selectedMember.werk}
+                    </p>
                   </div>
 
                   <div>
                     <p className="text-xs font-black uppercase text-[#dcaa2d]">
                       Favoriete cantuslied
                     </p>
-                    <p>{selectedMember.cantuslied}</p>
+
+                    <p>
+                      {selectedMember.cantuslied}
+                    </p>
                   </div>
 
                   <div>
                     <p className="text-xs font-black uppercase text-[#dcaa2d]">
                       Favoriete quote
                     </p>
+
                     <p>{selectedMember.quote}</p>
                   </div>
 
@@ -622,6 +761,7 @@ const jumpToLine = (time) => {
                     <p className="text-xs font-black uppercase text-[#dcaa2d]">
                       Favoriet drankje
                     </p>
+
                     <p>{selectedMember.drank}</p>
                   </div>
                 </div>
@@ -635,660 +775,972 @@ const jumpToLine = (time) => {
           Clublied
       ========================= */}
 
-   {page === "clublied" && (
-  <PageBackground variant="clublied">
-    <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-      <div className="mx-auto max-w-6xl">
-        <PageHeader
-          title="Clublied"
-          subtitle='Het clublied van Ajonista is op de wijze van "De Boemlala".'
-        />
-
-        {/* Muziekspeler */}
-        <div className="mx-auto mb-8 max-w-3xl rounded-3xl border border-[#dcaa2d]/30 bg-black/50 p-5 shadow-[0_15px_40px_rgba(0,0,0,0.35)] backdrop-blur-md">
-          <p className="mb-3 text-center text-sm font-black uppercase tracking-[0.16em] text-[#dcaa2d]">
-            Beluister het clublied
-          </p>
-
-          <audio
-            ref={audioRef}
-            controls
-            onTimeUpdate={handleTimeUpdate}
-            onEnded={() => setCurrentTime(0)}
-            className="w-full"
-          >
-            <source src={clubliedMp3} type="audio/mpeg" />
-            Je browser ondersteunt geen audio-element.
-          </audio>
-        </div>
-
-        {/* Songtekst */}
-        <div className="mt-10 rounded-3xl border border-[#dcaa2d]/40 bg-black/40 px-6 py-8 shadow-[0_15px_40px_rgba(0,0,0,0.30)] backdrop-blur-md sm:px-8 sm:py-10">
-          <div className="mb-8 border-b border-[#dcaa2d]/20 pb-5">
-            <h2 className="text-xl font-black uppercase tracking-[0.08em] text-[#dcaa2d]">
-              Volledige songtekst
-            </h2>
-
-            <p className="mt-2 text-sm text-white/50">
-              Tijdens het afspelen wordt elke gezongen zin automatisch aangeduid.
-            </p>
-          </div>
-
-          {sentenceData.length > 0 ? (
-            <div className="space-y-8">
-
-              {/* STROFE 1 */}
-              <section>
-                <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
-                  Strofe 1
-                </h3>
-
-                <LyricsLine
-                  text="Ajonista, moet naar hois toe gaan, de pinten die zijn op (bis)"
-                  sentence={sentenceData[0]}
-                  secondSentence={sentenceData[1]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                  bis
-                />
-
-                <LyricsLine
-                  text="Zoin ze op, lotj ze op"
-                  sentence={sentenceData[2]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                />
-
-                <LyricsLine
-                  text="Een nief vat slaan we op de kop"
-                  sentence={sentenceData[3]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                />
-              </section>
-
-              {/* REFREIN 1 */}
-              <section>
-                <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
-                  Refrein
-                </h3>
-
-                <LyricsLine
-                  text="En Ajonista ging ni naar hois (bis)"
-                  sentence={sentenceData[4]}
-                  secondSentence={sentenceData[5]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                  bis
-                />
-
-                <LyricsLine
-                  text="Want Ajonista is weer op de zwier, op de zwier, op de zwier"
-                  sentence={sentenceData[6]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                />
-
-                <LyricsLine
-                  text="Ajonista is weer op de zwier met een vat bier"
-                  sentence={sentenceData[7]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                />
-              </section>
-
-              {/* STROFE 2 */}
-              <section>
-                <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
-                  Strofe 2
-                </h3>
-
-                <LyricsLine
-                  text="Ajonista, moet naar den toeig gaan, au keel sta weeral droeig (bis)"
-                  sentence={sentenceData[8]}
-                  secondSentence={sentenceData[9]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                  bis
-                />
-
-                <LyricsLine
-                  text="Is ze droeig, lotj ze droeig"
-                  sentence={sentenceData[10]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                />
-
-                <LyricsLine
-                  text="De volgende sta al op den toeig"
-                  sentence={sentenceData[11]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                />
-              </section>
-
-              {/* REFREIN 2 */}
-              <section>
-                <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
-                  Refrein
-                </h3>
-
-                <LyricsLine
-                  text="En Ajonista ging naar den toeig (bis)"
-                  sentence={sentenceData[12]}
-                  secondSentence={sentenceData[13]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                  bis
-                />
-
-                <LyricsLine
-                  text="Want Ajonista is weer op de zwier, op de zwier, op de zwier"
-                  sentence={sentenceData[14]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                />
-
-                <LyricsLine
-                  text="Ajonista is weer op de zwier met een vat bier"
-                  sentence={sentenceData[15]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                />
-              </section>
-
-              {/* STROFE 3 */}
-              <section>
-                <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
-                  Strofe 3
-                </h3>
-
-                <LyricsLine
-                  text="Ajonista, moet naar hois toe gaan, au vat is weeral op (bis)"
-                  sentence={sentenceData[16]}
-                  secondSentence={sentenceData[17]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                  bis
-                />
-
-                <LyricsLine
-                  text="Is het op, lotj het op"
-                  sentence={sentenceData[18]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                />
-
-                <LyricsLine
-                  text="Sebiet kuiste mijne spaav weer op"
-                  sentence={sentenceData[19]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                />
-              </section>
-
-              {/* REFREIN 3 */}
-              <section>
-                <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
-                  Refrein
-                </h3>
-
-                <LyricsLine
-                  text="En Ajonista ging naar hois (bis)"
-                  sentence={sentenceData[20]}
-                  secondSentence={sentenceData[21]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                  bis
-                />
-
-                <LyricsLine
-                  text="Want Ajonista was weer op de zwier, op de zwier, op de zwier"
-                  sentence={sentenceData[22]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                />
-
-                <LyricsLine
-                  text="Ajonista was weer op de zwier met teveel bier"
-                  sentence={sentenceData[23]}
-                  currentTime={currentTime}
-                  jumpToLine={jumpToLine}
-                />
-              </section>
-            </div>
-          ) : (
-            <div className="flex min-h-[250px] items-center justify-center text-center">
-              <p className="font-black text-[#dcaa2d]">
-                Songtekst laden...
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  </PageBackground>
-)}
-      {/* =========================
-    Events
-========================= */}
-
-{page === "events" && (
-  <PageBackground variant="events">
-    <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-      <div className="mx-auto max-w-6xl">
-        <PageHeader title="Events" subtitle="Komende events" />
-
-       {/* Volledige kalender toevoegen */}
-<div className="relative z-[100] mx-auto mb-8 flex max-w-3xl flex-col items-center justify-between gap-4 rounded-2xl border border-[#dcaa2d]/35 bg-black/60 p-4 text-center shadow-[0_12px_28px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:flex-row sm:p-5 sm:text-left">
-  <div className="flex items-center gap-4">
-    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#dcaa2d] text-lg text-black">
-      <FaCalendarAlt />
-    </div>
-
-    <div>
-      <h3 className="font-black text-white">
-        Mis geen enkel event
-      </h3>
-
-      <p className="text-sm text-white/60">
-        Abonneer je op de volledige Ajonista-agenda.
-      </p>
-    </div>
-  </div>
-
-  <div
-    ref={calendarMenuRef}
-    className="relative w-full shrink-0 sm:ml-auto sm:w-auto"
-  >
-    <button
-      type="button"
-      onClick={() => setCalendarMenuOpen((open) => !open)}
-      aria-expanded={calendarMenuOpen}
-      aria-haspopup="menu"
-      className="flex h-11 w-full items-center justify-center rounded-full bg-[#dcaa2d] px-7 text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b] sm:w-auto"
-    >
-      Kalender toevoegen
-    </button>
-
-    {calendarMenuOpen && (
-      <div
-        role="menu"
-        onMouseLeave={() => setCalendarMenuOpen(false)}
-        className="absolute right-[-12px] top-[calc(100%+0.5rem)] z-[999] w-full min-w-[240px] overflow-hidden rounded-2xl border border-[#dcaa2d]/40 bg-[#111] p-2 text-left shadow-[0_18px_45px_rgba(0,0,0,0.85)] sm:right-0 sm:w-[250px]"
-      >
-        <a
-          href={AJONISTA_GOOGLE_CALENDAR_LINK}
-          target="_blank"
-          rel="noopener noreferrer"
-          role="menuitem"
-          onClick={() => setCalendarMenuOpen(false)}
-          className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:translate-x-1 hover:bg-[#dcaa2d] hover:text-black"
-        >
-          Google Agenda
-        </a>
-
-        <a
-          href={AJONISTA_APPLE_CALENDAR_LINK}
-          role="menuitem"
-          onClick={() => setCalendarMenuOpen(false)}
-          className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:translate-x-1  hover:bg-[#dcaa2d] hover:text-black"
-        >
-          Apple Agenda
-        </a>
-
-        <a
-          href={AJONISTA_ICAL_LINK}
-          target="_blank"
-          rel="noopener noreferrer"
-          role="menuitem"
-          onClick={() => setCalendarMenuOpen(false)}
-          className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:translate-x-1  hover:bg-[#dcaa2d] hover:text-black"
-        >
-          Outlook / andere agenda
-        </a>
-      </div>
-    )}
-  </div>
-</div>
-
-        {/* Individuele events */}
-        <div className="space-y-3 sm:space-y-5">
-          {events.map((event, index) => (
-            <div
-              key={event.id}
-              className="rounded-2xl border border-[#dcaa2d]/25 bg-black/60 p-4 shadow-[0_12px_28px_rgba(0,0,0,0.40)] backdrop-blur-xl sm:grid sm:grid-cols-[130px_1fr] sm:gap-5 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-0"
-            >
-              <div className="mb-3 flex items-center justify-between sm:mb-0 sm:grid sm:min-h-[140px] sm:place-items-center sm:rounded-3xl sm:border sm:border-[#dcaa2d]/40 sm:bg-black/70">
-                <span className="text-3xl font-black text-[#dcaa2d] sm:text-5xl">
-                  {formatDatum(event.datum)}
-                </span>
-
-                {index === 0 && (
-                  <span className="rounded-full bg-[#dcaa2d] px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-black sm:hidden">
-                    Volgende
-                  </span>
-                )}
-              </div>
-
-              <div className="sm:flex sm:min-h-[140px] sm:items-center sm:justify-between sm:gap-8 sm:rounded-3xl sm:border sm:border-[#dcaa2d]/35 sm:bg-white/[0.04] sm:p-8 sm:backdrop-blur-xl">
-                <div>
-                  <p className="mb-1 text-[11px] font-black uppercase tracking-[0.15em] text-[#dcaa2d] sm:text-xs">
-                    {event.tijd} • {event.locatie}
-                  </p>
-
-                  <h3 className="mb-1 text-xl font-black text-white sm:text-4xl">
-                    {event.titel}
-                  </h3>
-
-                  {index === 0 && (
-                    <span className="mt-4 hidden rounded-full bg-[#dcaa2d] px-4 py-2 text-xs font-black uppercase tracking-wider text-black sm:inline-flex">
-                      Eerstvolgende event
-                    </span>
-                  )}
-                </div>
-
-                <div className="mt-4 flex flex-col items-center gap-2 sm:mt-0">
-                  {maakAgendaLink(event) && (
-                    <a
-                      href={maakAgendaLink(event)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b]"
-                    >
-                      Agenda
-                    </a>
-                  )}
-
-                  {event.facebook_link && (
-                    <a
-                      href={event.facebook_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b]"
-                    >
-                      Event bekijken
-                    </a>
-                  )}
-
-                  {event.fotoalbum && (
-                    <a
-                      href={event.fotoalbum}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b]"
-                    >
-                      Foto&apos;s bekijken
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {events.length === 0 && (
-          <p className="mt-12 text-center text-white/60">
-            Er zijn momenteel geen komende events.
-          </p>
-        )}
-      </div>
-    </div>
-  </PageBackground>
-)}
-
-      {/* =========================
-          't Ajointjen overzicht
-      ========================= */}
-
-      {page === "t_ajointjen" && !selectedClubblad && (
-  <PageBackground variant="events">
-    <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-      <div className="mx-auto max-w-6xl">
-        <PageHeader
-          title="'t Ajointjen"
-          subtitle="Het clubblad van Ajonista. Nieuwste edities eerst."
-        />
-
-        <div className="mb-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <label className="text-sm font-black uppercase tracking-wider text-[#dcaa2d]">
-            Academiejaar
-          </label>
-
-          <select
-            value={filterAcademiejaar}
-            onChange={(e) => setFilterAcademiejaar(e.target.value)}
-            className="w-full rounded-full border border-[#dcaa2d]/40 bg-black px-5 py-3 text-sm font-black text-white outline-none sm:w-auto"
-          >
-            {academiejaren.map((jaar) => (
-              <option key={jaar} value={jaar}>
-                {jaar}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex justify-center">
-          {gefilterdeClubbladen.map((blad) => (
-            <button
-              key={blad.id}
-              type="button"
-              onClick={() => setSelectedClubblad(blad)}
-              className="w-full max-w-[360px] overflow-hidden rounded-[1.5rem] border border-[#dcaa2d]/25 bg-black/60 text-left shadow-[0_10px_20px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-[#dcaa2d]"
-            >
-              <img
-                src={blad.afbeelding_url}
-                alt={blad.naam_clubblad}
-                className="h-[505px] w-full object-contain object-top"
-              />
-
-              <div className="p-5">
-                <h3 className="mb-3 text-xl font-black text-[#dcaa2d]">
-                  {blad.naam_clubblad}
-                </h3>
-
-                <p className="mb-4 text-sm text-white/65">
-                  {blad.sub_titel}
-                </p>
-
-                <p className="text-sm font-bold text-white/45">
-                  {blad.maand} {blad.jaar}
-                </p>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {gefilterdeClubbladen.length === 0 && (
-          <p className="mt-12 text-center text-white/60">
-            Geen clubbladen gevonden.
-          </p>
-        )}
-      </div>
-    </div>
-  </PageBackground>
-)}
-      {/* =========================
-          't Ajointjen detail
-      ========================= */}
-
-      {page === "t_ajointjen" && selectedClubblad && (
-        <PageBackground variant="events">
+      {page === "clublied" && (
+        <PageBackground variant="clublied">
           <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
             <div className="mx-auto max-w-6xl">
-              <div className="mb-6 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => setSelectedClubblad(null)}
-                  className="rounded-full bg-[#dcaa2d] px-6 py-3 text-sm font-black text-black transition hover:bg-[#f2c14b]"
+              <PageHeader
+                title="Clublied"
+                subtitle='Het clublied van Ajonista is op de wijze van "De Boemlala".'
+              />
+
+              <div className="mx-auto mb-8 max-w-3xl rounded-3xl border border-[#dcaa2d]/30 bg-black/50 p-5 shadow-[0_15px_40px_rgba(0,0,0,0.35)] backdrop-blur-md">
+                <p className="mb-3 text-center text-sm font-black uppercase tracking-[0.16em] text-[#dcaa2d]">
+                  Beluister het clublied
+                </p>
+
+                <audio
+                  ref={audioRef}
+                  controls
+                  onTimeUpdate={
+                    handleTimeUpdate
+                  }
+                  onEnded={() =>
+                    setCurrentTime(0)
+                  }
+                  className="w-full"
                 >
-                  ← Terug naar overzicht
-                </button>
+                  <source
+                    src={clubliedMp3}
+                    type="audio/mpeg"
+                  />
+
+                  Je browser ondersteunt geen
+                  audio-element.
+                </audio>
               </div>
 
-              <PageHeader title={selectedClubblad.naam_clubblad} />
+              <div className="mt-10 rounded-3xl border border-[#dcaa2d]/40 bg-black/40 px-6 py-8 shadow-[0_15px_40px_rgba(0,0,0,0.30)] backdrop-blur-md sm:px-8 sm:py-10">
+                <div className="mb-8 border-b border-[#dcaa2d]/20 pb-5">
+                  <h2 className="text-xl font-black uppercase tracking-[0.08em] text-[#dcaa2d]">
+                    Volledige songtekst
+                  </h2>
 
-              <div className="mx-auto flex flex-col items-center">
-                <img
-                  src={selectedClubblad.afbeelding_url}
-                  alt={selectedClubblad.naam_clubblad}
-                  className="mx-auto w-full max-w-[450px] object-contain md:max-w-[600px]"
-                />
+                  <p className="mt-2 text-sm text-white/50">
+                    Tijdens het afspelen wordt
+                    elke gezongen zin automatisch
+                    aangeduid.
+                  </p>
+                </div>
+
+                {sentenceData.length > 0 ? (
+                  <div className="space-y-8">
+                    <section>
+                      <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
+                        Strofe 1
+                      </h3>
+
+                      <LyricsLine
+                        text="Ajonista, moet naar hois toe gaan, de pinten die zijn op (bis)"
+                        sentence={
+                          sentenceData[0]
+                        }
+                        secondSentence={
+                          sentenceData[1]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                        bis
+                      />
+
+                      <LyricsLine
+                        text="Zoin ze op, lotj ze op"
+                        sentence={
+                          sentenceData[2]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                      />
+
+                      <LyricsLine
+                        text="Een nief vat slaan we op de kop"
+                        sentence={
+                          sentenceData[3]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                      />
+                    </section>
+
+                    <section>
+                      <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
+                        Refrein
+                      </h3>
+
+                      <LyricsLine
+                        text="En Ajonista ging ni naar hois (bis)"
+                        sentence={
+                          sentenceData[4]
+                        }
+                        secondSentence={
+                          sentenceData[5]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                        bis
+                      />
+
+                      <LyricsLine
+                        text="Want Ajonista is weer op de zwier, op de zwier, op de zwier"
+                        sentence={
+                          sentenceData[6]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                      />
+
+                      <LyricsLine
+                        text="Ajonista is weer op de zwier met een vat bier"
+                        sentence={
+                          sentenceData[7]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                      />
+                    </section>
+
+                    <section>
+                      <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
+                        Strofe 2
+                      </h3>
+
+                      <LyricsLine
+                        text="Ajonista, moet naar den toeig gaan, au keel sta weeral droeig (bis)"
+                        sentence={
+                          sentenceData[8]
+                        }
+                        secondSentence={
+                          sentenceData[9]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                        bis
+                      />
+
+                      <LyricsLine
+                        text="Is ze droeig, lotj ze droeig"
+                        sentence={
+                          sentenceData[10]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                      />
+
+                      <LyricsLine
+                        text="De volgende sta al op den toeig"
+                        sentence={
+                          sentenceData[11]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                      />
+                    </section>
+
+                    <section>
+                      <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
+                        Refrein
+                      </h3>
+
+                      <LyricsLine
+                        text="En Ajonista ging naar den toeig (bis)"
+                        sentence={
+                          sentenceData[12]
+                        }
+                        secondSentence={
+                          sentenceData[13]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                        bis
+                      />
+
+                      <LyricsLine
+                        text="Want Ajonista is weer op de zwier, op de zwier, op de zwier"
+                        sentence={
+                          sentenceData[14]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                      />
+
+                      <LyricsLine
+                        text="Ajonista is weer op de zwier met een vat bier"
+                        sentence={
+                          sentenceData[15]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                      />
+                    </section>
+
+                    <section>
+                      <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
+                        Strofe 3
+                      </h3>
+
+                      <LyricsLine
+                        text="Ajonista, moet naar hois toe gaan, au vat is weeral op (bis)"
+                        sentence={
+                          sentenceData[16]
+                        }
+                        secondSentence={
+                          sentenceData[17]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                        bis
+                      />
+
+                      <LyricsLine
+                        text="Is het op, lotj het op"
+                        sentence={
+                          sentenceData[18]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                      />
+
+                      <LyricsLine
+                        text="Sebiet kuiste mijne spaav weer op"
+                        sentence={
+                          sentenceData[19]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                      />
+                    </section>
+
+                    <section>
+                      <h3 className="mb-3 text-lg font-black text-[#dcaa2d]">
+                        Refrein
+                      </h3>
+
+                      <LyricsLine
+                        text="En Ajonista ging naar hois (bis)"
+                        sentence={
+                          sentenceData[20]
+                        }
+                        secondSentence={
+                          sentenceData[21]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                        bis
+                      />
+
+                      <LyricsLine
+                        text="Want Ajonista was weer op de zwier, op de zwier, op de zwier"
+                        sentence={
+                          sentenceData[22]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                      />
+
+                      <LyricsLine
+                        text="Ajonista was weer op de zwier met teveel bier"
+                        sentence={
+                          sentenceData[23]
+                        }
+                        currentTime={
+                          currentTime
+                        }
+                        jumpToLine={
+                          jumpToLine
+                        }
+                      />
+                    </section>
+                  </div>
+                ) : (
+                  <div className="flex min-h-[250px] items-center justify-center text-center">
+                    <p className="font-black text-[#dcaa2d]">
+                      Songtekst laden...
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </PageBackground>
       )}
+
+      {/* =========================
+          Events
+      ========================= */}
+
+      {page === "events" && (
+        <PageBackground variant="events">
+          <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+            <div className="mx-auto max-w-6xl">
+              <PageHeader
+                title="Events"
+                subtitle="Komende events"
+              />
+
+              {/* Volledige kalender toevoegen */}
+
+              <div className="relative z-[100] mx-auto mb-8 flex max-w-3xl flex-col items-center justify-between gap-4 rounded-2xl border border-[#dcaa2d]/35 bg-black/60 p-4 text-center shadow-[0_12px_28px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:flex-row sm:p-5 sm:text-left">
+                <div className="flex items-center gap-4">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#dcaa2d] text-lg text-black">
+                    <FaCalendarAlt />
+                  </div>
+
+                  <div>
+                    <h3 className="font-black text-white">
+                      Mis geen enkel event
+                    </h3>
+
+                    <p className="text-sm text-white/60">
+                      Abonneer je op de
+                      volledige Ajonista-agenda.
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  ref={calendarMenuRef}
+                  className="relative w-full shrink-0 sm:ml-auto sm:w-auto"
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCalendarMenuOpen(
+                        (open) => !open
+                      )
+                    }
+                    aria-expanded={
+                      calendarMenuOpen
+                    }
+                    aria-haspopup="menu"
+                    className="flex h-11 w-full items-center justify-center rounded-full bg-[#dcaa2d] px-7 text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b] sm:w-auto"
+                  >
+                    Kalender toevoegen
+                  </button>
+
+                  {calendarMenuOpen && (
+                    <div
+                      role="menu"
+                      onMouseLeave={() =>
+                        setCalendarMenuOpen(
+                          false
+                        )
+                      }
+                      className="absolute right-[-12px] top-[calc(100%+0.5rem)] z-[999] w-full min-w-[240px] overflow-hidden rounded-2xl border border-[#dcaa2d]/40 bg-[#111] p-2 text-left shadow-[0_18px_45px_rgba(0,0,0,0.85)] sm:right-0 sm:w-[250px]"
+                    >
+                      <a
+                        href={
+                          AJONISTA_GOOGLE_CALENDAR_LINK
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        role="menuitem"
+                        onClick={() =>
+                          setCalendarMenuOpen(
+                            false
+                          )
+                        }
+                        className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:translate-x-1 hover:bg-[#dcaa2d] hover:text-black"
+                      >
+                        Google Agenda
+                      </a>
+
+                      <a
+                        href={
+                          AJONISTA_APPLE_CALENDAR_LINK
+                        }
+                        role="menuitem"
+                        onClick={() =>
+                          setCalendarMenuOpen(
+                            false
+                          )
+                        }
+                        className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:translate-x-1 hover:bg-[#dcaa2d] hover:text-black"
+                      >
+                        Apple Agenda
+                      </a>
+
+                      <a
+                        href={
+                          AJONISTA_ICAL_LINK
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        role="menuitem"
+                        onClick={() =>
+                          setCalendarMenuOpen(
+                            false
+                          )
+                        }
+                        className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-black text-white transition-all duration-200 hover:translate-x-1 hover:bg-[#dcaa2d] hover:text-black"
+                      >
+                        Outlook / andere agenda
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Individuele events */}
+
+              <div className="space-y-3 sm:space-y-5">
+                {events.map((event) => {
+                  const isEerstvolgende =
+                    event.id ===
+                    eerstvolgendeEventId;
+
+                  return (
+                    <div
+                      key={event.id}
+                      className="rounded-2xl border border-[#dcaa2d]/25 bg-black/60 p-4 shadow-[0_12px_28px_rgba(0,0,0,0.40)] backdrop-blur-xl sm:grid sm:grid-cols-[130px_1fr] sm:gap-5 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-0"
+                    >
+                      <div className="mb-3 flex items-center justify-between sm:mb-0 sm:grid sm:min-h-[140px] sm:place-items-center sm:rounded-3xl sm:border sm:border-[#dcaa2d]/40 sm:bg-black/70">
+                        <span className="text-3xl font-black text-[#dcaa2d] sm:text-5xl">
+                          {formatDatum(
+                            event.datum
+                          )}
+                        </span>
+
+                        {isEerstvolgende && (
+                          <span className="rounded-full bg-[#dcaa2d] px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-black sm:hidden">
+                            Volgende
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="sm:flex sm:min-h-[140px] sm:items-center sm:justify-between sm:gap-8 sm:rounded-3xl sm:border sm:border-[#dcaa2d]/35 sm:bg-white/[0.04] sm:p-8 sm:backdrop-blur-xl">
+                        <div>
+                          <p className="mb-1 text-[11px] font-black uppercase tracking-[0.15em] text-[#dcaa2d] sm:text-xs">
+                            {event.tijd} •{" "}
+                            {event.locatie}
+                          </p>
+
+                          <h3 className="mb-1 text-xl font-black text-white sm:text-4xl">
+                            {event.titel}
+                          </h3>
+
+                          {isEerstvolgende && (
+                            <span className="mt-4 hidden rounded-full bg-[#dcaa2d] px-4 py-2 text-xs font-black uppercase tracking-wider text-black sm:inline-flex">
+                              Eerstvolgende
+                              event
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-4 flex flex-col items-center gap-2 sm:mt-0">
+                          {maakAgendaLink(
+                            event
+                          ) && (
+                            <a
+                              href={maakAgendaLink(
+                                event
+                              )}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b]"
+                            >
+                              Agenda
+                            </a>
+                          )}
+
+                          {event.facebook_link && (
+                            <a
+                              href={
+                                event.facebook_link
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b]"
+                            >
+                              Event bekijken
+                            </a>
+                          )}
+
+                          {event.fotoalbum && (
+                            <a
+                              href={
+                                event.fotoalbum
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex h-12 w-56 items-center justify-center rounded-full bg-[#dcaa2d] text-xs font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-[#f2c14b]"
+                            >
+                              Foto&apos;s bekijken
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {events.length === 0 && (
+                <p className="mt-12 text-center text-white/60">
+                  Er zijn momenteel geen
+                  komende events.
+                </p>
+              )}
+            </div>
+          </div>
+        </PageBackground>
+      )}
+
+      {/* =========================
+          't Ajointjen overzicht
+      ========================= */}
+
+      {page === "t_ajointjen" &&
+        !selectedClubblad && (
+          <PageBackground variant="events">
+            <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+              <div className="mx-auto max-w-6xl">
+                <PageHeader
+                  title="'t Ajointjen"
+                  subtitle="Het clubblad van Ajonista. Nieuwste edities eerst."
+                />
+
+                <div className="mb-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                  <label className="text-sm font-black uppercase tracking-wider text-[#dcaa2d]">
+                    Academiejaar
+                  </label>
+
+                  <select
+                    value={
+                      filterAcademiejaar
+                    }
+                    onChange={(e) =>
+                      setFilterAcademiejaar(
+                        e.target.value
+                      )
+                    }
+                    className="w-full rounded-full border border-[#dcaa2d]/40 bg-black px-5 py-3 text-sm font-black text-white outline-none sm:w-auto"
+                  >
+                    {academiejaren.map(
+                      (jaar) => (
+                        <option
+                          key={jaar}
+                          value={jaar}
+                        >
+                          {jaar}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+
+                <div className="flex justify-center">
+                  {gefilterdeClubbladen.map(
+                    (blad) => (
+                      <button
+                        key={blad.id}
+                        type="button"
+                        onClick={() =>
+                          setSelectedClubblad(
+                            blad
+                          )
+                        }
+                        className="w-full max-w-[360px] overflow-hidden rounded-[1.5rem] border border-[#dcaa2d]/25 bg-black/60 text-left shadow-[0_10px_20px_rgba(0,0,0,0.35)] transition hover:-translate-y-1 hover:border-[#dcaa2d]"
+                      >
+                        <img
+                          src={
+                            blad.afbeelding_url
+                          }
+                          alt={
+                            blad.naam_clubblad
+                          }
+                          className="h-[505px] w-full object-contain object-top"
+                        />
+
+                        <div className="p-5">
+                          <h3 className="mb-3 text-xl font-black text-[#dcaa2d]">
+                            {
+                              blad.naam_clubblad
+                            }
+                          </h3>
+
+                          <p className="mb-4 text-sm text-white/65">
+                            {blad.sub_titel}
+                          </p>
+
+                          <p className="text-sm font-bold text-white/45">
+                            {blad.maand}{" "}
+                            {blad.jaar}
+                          </p>
+                        </div>
+                      </button>
+                    )
+                  )}
+                </div>
+
+                {gefilterdeClubbladen.length ===
+                  0 && (
+                  <p className="mt-12 text-center text-white/60">
+                    Geen clubbladen gevonden.
+                  </p>
+                )}
+              </div>
+            </div>
+          </PageBackground>
+        )}
+
+      {/* =========================
+          't Ajointjen detail
+      ========================= */}
+
+      {page === "t_ajointjen" &&
+        selectedClubblad && (
+          <PageBackground variant="events">
+            <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+              <div className="mx-auto max-w-6xl">
+                <div className="mb-6 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedClubblad(
+                        null
+                      )
+                    }
+                    className="rounded-full bg-[#dcaa2d] px-6 py-3 text-sm font-black text-black transition hover:bg-[#f2c14b]"
+                  >
+                    ← Terug naar overzicht
+                  </button>
+                </div>
+
+                <PageHeader
+                  title={
+                    selectedClubblad.naam_clubblad
+                  }
+                />
+
+                <div className="mx-auto flex flex-col items-center">
+                  <img
+                    src={
+                      selectedClubblad.afbeelding_url
+                    }
+                    alt={
+                      selectedClubblad.naam_clubblad
+                    }
+                    className="mx-auto w-full max-w-[450px] object-contain md:max-w-[600px]"
+                  />
+                </div>
+              </div>
+            </div>
+          </PageBackground>
+        )}
+
       {/* =========================
           Lid worden
       ========================= */}
 
-         {page === "lidworden" && (
-  <PageBackground variant="lidworden">
-    <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-      <div className="mx-auto max-w-6xl">
-        <PageHeader
-          title="Lid worden"
-          subtitle="Word lid van Ajonista en maak deel uit van onze club. Vul je gegevens in en wij nemen contact met je op."
-        />
-
-        <div className="mx-auto mb-8 flex max-w-3xl items-center gap-6">
-          <div className="h-[2px] flex-1 bg-[#dcaa2d]" />
-          <img
-            src={schildFoto}
-            alt="Ajonista"
-            className="h-32 w-auto object-contain"
-          />
-          <div className="h-[2px] flex-1 bg-[#dcaa2d]" />
-        </div>
-
-        <div className="mx-auto mb-8 max-w-3xl rounded-3xl border border-[#dcaa2d]/30 bg-white/[0.06] p-6 text-center shadow-[0_0_45px_rgba(0,0,0,0.55)] backdrop-blur-xl md:p-8">
-          <h3 className="mb-4 text-lg font-black text-[#dcaa2d]">
-            Lidmaatschap bij Ajonista
-          </h3>
-
-          <p className="mb-4 text-sm text-[#dcaa2d]/80">
-            Wat houdt dit in?
-          </p>
-
-          <p className="mb-4 text-base leading-relaxed text-white/85 md:text-lg">
-            Tijdens ons eerste werkingsjaar bedraagt het lidgeld{" "}
-            <span className="font-black text-[#dcaa2d]">€30</span>, inclusief
-            het officiële Ajonista-lint.
-          </p>
-
-          <p className="mb-4 text-base leading-relaxed text-white/85 md:text-lg">
-            Om onze club een sterke start te geven, wordt elk nieuw lid dit jaar
-            onmiddellijk commi. Deze uitzonderlijke regeling geldt enkel tijdens
-            het eerste werkingsjaar van Ajonista.
-          </p>
-
-          <p className="text-base leading-relaxed text-white/85 md:text-lg">
-            Vanaf volgend academiejaar zullen nieuwe leden opnieuw het
-            traditionele schachtentraject doorlopen.
-          </p>
-        </div>
-
-        <form
-          name="lid-worden"
-          method="POST"
-          data-netlify="true"
-          className="mx-auto max-w-3xl space-y-5 rounded-3xl border border-[#dcaa2d]/30 bg-white/[0.06] p-5 shadow-[0_0_45px_rgba(0,0,0,0.65)] backdrop-blur-xl md:p-8"
-          onSubmit={async (e) => {
-            e.preventDefault();
-
-            const form = e.currentTarget;
-            const formData = new FormData(form);
-
-            try {
-              const response = await fetch("/", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: new URLSearchParams(formData).toString(),
-              });
-
-              if (!response.ok) throw new Error("Verzenden mislukt");
-
-              form.reset();
-              setShowSuccess(true);
-            } catch (error) {
-              console.error(error);
-              alert("Er ging iets mis bij het verzenden.");
-            }
-          }}
-        >
-          <input type="hidden" name="form-name" value="lid-worden" />
-
-          {[
-            ["naam", "Voornaam*", "Jouw voornaam", <FaUser />, "text", true],
-            ["achternaam", "Achternaam*", "Jouw achternaam", <FaUser />, "text", true],
-            ["email", "E-mail*", "jouw@email.com", <MdEmail />, "email", true],
-            ["telefoon", "Telefoonnummer", "+32 4 123 45 67", <FaPhoneAlt />, "tel", false],
-            ["studie", "Studierichting / werk", "Studierichting of werk", <FaGraduationCap />, "text", false],
-          ].map(([name, label, placeholder, icon, type, required]) => (
-            <label className="block" key={name}>
-              <span className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-[#dcaa2d]">
-                {icon} {label}
-              </span>
-
-              <input
-                type={type}
-                name={name}
-                placeholder={placeholder}
-                required={required}
-                className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none transition placeholder:text-white/35 focus:border-[#dcaa2d] focus:ring-2 focus:ring-[#dcaa2d]/30"
+      {page === "lidworden" && (
+        <PageBackground variant="lidworden">
+          <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+            <div className="mx-auto max-w-6xl">
+              <PageHeader
+                title="Lid worden"
+                subtitle="Word lid van Ajonista en maak deel uit van onze club. Vul je gegevens in en wij nemen contact met je op."
               />
-            </label>
-          ))}
 
-          <label className="block">
-            <span className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-[#dcaa2d]">
-              <FaPen /> Bericht
-            </span>
+              <div className="mx-auto mb-8 flex max-w-3xl items-center gap-6">
+                <div className="h-[2px] flex-1 bg-[#dcaa2d]" />
 
-            <textarea
-              name="bericht"
-              rows="5"
-              placeholder="Moest je nog iets willen toevoegen..."
-              className="w-full resize-none rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none transition placeholder:text-white/35 focus:border-[#dcaa2d] focus:ring-2 focus:ring-[#dcaa2d]/30"
-            />
-          </label>
+                <img
+                  src={schildFoto}
+                  alt="Ajonista"
+                  className="h-32 w-auto object-contain"
+                />
 
-          <button
-            className="mt-4 w-full rounded-full bg-[#dcaa2d] px-8 py-4 text-base font-black uppercase tracking-[0.18em] text-black shadow-[0_0_30px_rgba(220,170,45,0.35)] transition hover:-translate-y-1 hover:bg-[#f2c14b] active:translate-y-0"
-            type="submit"
-          >
-            Versturen
-          </button>
-        </form>
-      </div>
-    </div>
-  </PageBackground>
-)}
+                <div className="h-[2px] flex-1 bg-[#dcaa2d]" />
+              </div>
+
+              <div className="mx-auto mb-8 max-w-3xl rounded-3xl border border-[#dcaa2d]/30 bg-white/[0.06] p-6 text-center shadow-[0_0_45px_rgba(0,0,0,0.55)] backdrop-blur-xl md:p-8">
+                <h3 className="mb-4 text-lg font-black text-[#dcaa2d]">
+                  Lidmaatschap bij Ajonista
+                </h3>
+
+                <p className="mb-4 text-sm text-[#dcaa2d]/80">
+                  Wat houdt dit in?
+                </p>
+
+                <p className="mb-4 text-base leading-relaxed text-white/85 md:text-lg">
+                  Tijdens ons eerste
+                  werkingsjaar bedraagt het
+                  lidgeld{" "}
+                  <span className="font-black text-[#dcaa2d]">
+                    €30
+                  </span>
+                  , inclusief het officiële
+                  Ajonista-lint.
+                </p>
+
+                <p className="mb-4 text-base leading-relaxed text-white/85 md:text-lg">
+                  Om onze club een sterke
+                  start te geven, wordt elk
+                  nieuw lid dit jaar
+                  onmiddellijk commi. Deze
+                  uitzonderlijke regeling
+                  geldt enkel tijdens het
+                  eerste werkingsjaar van
+                  Ajonista.
+                </p>
+
+                <p className="text-base leading-relaxed text-white/85 md:text-lg">
+                  Vanaf volgend
+                  academiejaar zullen nieuwe
+                  leden opnieuw het
+                  traditionele
+                  schachtentraject
+                  doorlopen.
+                </p>
+              </div>
+
+              <form
+                name="lid-worden"
+                method="POST"
+                data-netlify="true"
+                className="mx-auto max-w-3xl space-y-5 rounded-3xl border border-[#dcaa2d]/30 bg-white/[0.06] p-5 shadow-[0_0_45px_rgba(0,0,0,0.65)] backdrop-blur-xl md:p-8"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+
+                  const form =
+                    e.currentTarget;
+
+                  const formData =
+                    new FormData(form);
+
+                  try {
+                    const response =
+                      await fetch("/", {
+                        method: "POST",
+
+                        headers: {
+                          "Content-Type":
+                            "application/x-www-form-urlencoded",
+                        },
+
+                        body: new URLSearchParams(
+                          formData
+                        ).toString(),
+                      });
+
+                    if (!response.ok) {
+                      throw new Error(
+                        "Verzenden mislukt"
+                      );
+                    }
+
+                    form.reset();
+                    setShowSuccess(true);
+                  } catch (error) {
+                    console.error(error);
+
+                    alert(
+                      "Er ging iets mis bij het verzenden."
+                    );
+                  }
+                }}
+              >
+                <input
+                  type="hidden"
+                  name="form-name"
+                  value="lid-worden"
+                />
+
+                {[
+                  [
+                    "naam",
+                    "Voornaam*",
+                    "Jouw voornaam",
+                    <FaUser />,
+                    "text",
+                    true,
+                  ],
+
+                  [
+                    "achternaam",
+                    "Achternaam*",
+                    "Jouw achternaam",
+                    <FaUser />,
+                    "text",
+                    true,
+                  ],
+
+                  [
+                    "email",
+                    "E-mail*",
+                    "jouw@email.com",
+                    <MdEmail />,
+                    "email",
+                    true,
+                  ],
+
+                  [
+                    "telefoon",
+                    "Telefoonnummer",
+                    "+32 4 123 45 67",
+                    <FaPhoneAlt />,
+                    "tel",
+                    false,
+                  ],
+
+                  [
+                    "studie",
+                    "Studierichting / werk",
+                    "Studierichting of werk",
+                    <FaGraduationCap />,
+                    "text",
+                    false,
+                  ],
+                ].map(
+                  ([
+                    name,
+                    label,
+                    placeholder,
+                    icon,
+                    type,
+                    required,
+                  ]) => (
+                    <label
+                      className="block"
+                      key={name}
+                    >
+                      <span className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-[#dcaa2d]">
+                        {icon} {label}
+                      </span>
+
+                      <input
+                        type={type}
+                        name={name}
+                        placeholder={
+                          placeholder
+                        }
+                        required={required}
+                        className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none transition placeholder:text-white/35 focus:border-[#dcaa2d] focus:ring-2 focus:ring-[#dcaa2d]/30"
+                      />
+                    </label>
+                  )
+                )}
+
+                <label className="block">
+                  <span className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-[#dcaa2d]">
+                    <FaPen /> Bericht
+                  </span>
+
+                  <textarea
+                    name="bericht"
+                    rows="5"
+                    placeholder="Moest je nog iets willen toevoegen..."
+                    className="w-full resize-none rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none transition placeholder:text-white/35 focus:border-[#dcaa2d] focus:ring-2 focus:ring-[#dcaa2d]/30"
+                  />
+                </label>
+
+                <button
+                  className="mt-4 w-full rounded-full bg-[#dcaa2d] px-8 py-4 text-base font-black uppercase tracking-[0.18em] text-black shadow-[0_0_30px_rgba(220,170,45,0.35)] transition hover:-translate-y-1 hover:bg-[#f2c14b] active:translate-y-0"
+                  type="submit"
+                >
+                  Versturen
+                </button>
+              </form>
+            </div>
+          </div>
+        </PageBackground>
+      )}
 
       {/* =========================
-          Succesmelding lid worden
+          Succesmelding
       ========================= */}
 
       {showSuccess && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm">
           <div className="max-w-md rounded-3xl border border-[#dcaa2d]/40 bg-[#111] p-8 text-center shadow-[0_0_40px_rgba(220,170,45,0.25)]">
-            <div className="mb-4 text-5xl">🍻</div>
+            <div className="mb-4 text-5xl">
+              🍻
+            </div>
 
             <h3 className="mb-3 text-2xl font-black text-[#dcaa2d]">
               Bedankt!
             </h3>
 
             <p className="mb-6 text-white/80">
-              Bedankt voor je interesse in Ajonista.
+              Bedankt voor je interesse in
+              Ajonista.
               <br />
-              We nemen zo snel mogelijk contact met je op.
+              We nemen zo snel mogelijk
+              contact met je op.
             </p>
 
             <button
-              onClick={() => setShowSuccess(false)}
+              onClick={() =>
+                setShowSuccess(false)
+              }
               className="rounded-full bg-[#dcaa2d] px-6 py-3 font-black text-black"
             >
               Sluiten
@@ -1296,90 +1748,89 @@ const jumpToLine = (time) => {
           </div>
         </div>
       )}
-<>
-  {/* ==================== GESCHIEDENIS ==================== */}
 
-  {page === "geschiedenis" && (
-    <PageBackground variant="default">
-      <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-        <div className="mx-auto max-w-6xl">
+      {/* =========================
+          Geschiedenis
+      ========================= */}
 
-          {/* TITEL */}
-          <h1 className="mb-10 text-center text-4xl font-black uppercase tracking-[0.08em] text-[#dcaa2d] sm:text-5xl">
-            Geschiedenis
-          </h1>
+      {page === "geschiedenis" && (
+        <PageBackground variant="default">
+          <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+            <div className="mx-auto max-w-6xl">
+              <h1 className="mb-10 text-center text-4xl font-black uppercase tracking-[0.08em] text-[#dcaa2d] sm:text-5xl">
+                Geschiedenis
+              </h1>
 
-          {/* BINNENKORT */}
-          <div className="rounded-3xl border border-[#dcaa2d]/30 bg-black/45 px-6 py-20 text-center shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-md sm:px-10">
-            <p className="text-2xl font-black text-[#dcaa2d] sm:text-3xl">
-              Onze archeologen zijn nog diep aan het graven... ⛏️
-            </p>
+              <div className="rounded-3xl border border-[#dcaa2d]/30 bg-black/45 px-6 py-20 text-center shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-md sm:px-10">
+                <p className="text-2xl font-black text-[#dcaa2d] sm:text-3xl">
+                  Onze archeologen zijn nog
+                  diep aan het graven... ⛏️
+                </p>
+              </div>
+            </div>
           </div>
-
-        </div>
-      </div>
-    </PageBackground>
-  )}
-</>
+        </PageBackground>
+      )}
 
       {/* =========================
           Statuten
       ========================= */}
-       {page === "statuten" && (
-  <PageBackground variant="statuten">
-    <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
-      <div className="mx-auto max-w-7xl">
-        <PageHeader
-          title="Statuten"
-          subtitle="Hieronder vind je de officiële statuten van Ajonista."
-        />
 
-        {/* Mobiel & iPad/tablet */}
-        <div className="lg:hidden">
-          <div className="flex flex-col items-center gap-4">
-            <a
-              href={statutenPdf}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full max-w-sm rounded-full bg-[#dcaa2d] px-8 py-3 text-center font-black text-black transition hover:bg-[#f2c14b]"
-            >
-              Open de statuten
-            </a>
+      {page === "statuten" && (
+        <PageBackground variant="statuten">
+          <div className="px-4 pt-20 pb-20 text-white sm:px-8 lg:px-16">
+            <div className="mx-auto max-w-7xl">
+              <PageHeader
+                title="Statuten"
+                subtitle="Hieronder vind je de officiële statuten van Ajonista."
+              />
 
-            <a
-              href={statutenPdf}
-              download
-              className="w-full max-w-sm rounded-full border border-[#dcaa2d]/50 px-8 py-3 text-center font-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
-            >
-              Download de statuten
-            </a>
+              <div className="lg:hidden">
+                <div className="flex flex-col items-center gap-4">
+                  <a
+                    href={statutenPdf}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full max-w-sm rounded-full bg-[#dcaa2d] px-8 py-3 text-center font-black text-black transition hover:bg-[#f2c14b]"
+                  >
+                    Open de statuten
+                  </a>
+
+                  <a
+                    href={statutenPdf}
+                    download
+                    className="w-full max-w-sm rounded-full border border-[#dcaa2d]/50 px-8 py-3 text-center font-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
+                  >
+                    Download de statuten
+                  </a>
+                </div>
+              </div>
+
+              <div className="hidden lg:block">
+                <div className="mb-8 flex justify-center">
+                  <a
+                    href={statutenPdf}
+                    download
+                    className="rounded-full border border-[#dcaa2d]/50 px-8 py-3 text-center font-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
+                  >
+                    Download de statuten
+                    (PDF)
+                  </a>
+                </div>
+
+                <div className="overflow-hidden rounded-3xl border border-[#dcaa2d]/30 bg-white">
+                  <iframe
+                    src={`${statutenPdf}#toolbar=0&navpanes=0&scrollbar=1&zoom=page-width`}
+                    title="Statuten Ajonista"
+                    className="h-[1600px] w-full"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </PageBackground>
+      )}
 
-        {/* Alleen desktop/laptop */}
-        <div className="hidden lg:block">
-          <div className="mb-8 flex justify-center">
-            <a
-              href={statutenPdf}
-              download
-              className="rounded-full border border-[#dcaa2d]/50 px-8 py-3 text-center font-black text-[#dcaa2d] transition hover:bg-[#dcaa2d] hover:text-black"
-            >
-              Download de statuten (PDF)
-            </a>
-          </div>
-
-          <div className="overflow-hidden rounded-3xl border border-[#dcaa2d]/30 bg-white">
-            <iframe
-              src={`${statutenPdf}#toolbar=0&navpanes=0&scrollbar=1&zoom=page-width`}
-              title="Statuten Ajonista"
-              className="h-[1600px] w-full"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  </PageBackground>
-)}
       {/* =========================
           Footer
       ========================= */}
@@ -1390,13 +1841,18 @@ const jumpToLine = (time) => {
             <h3 className="mb-3 text-2xl font-black text-[#dcaa2d]">
               Ajonista
             </h3>
+
             <p className="text-white/75">
-              De studentenclub in Aalst voor studenten die graag uitgaan in Aalst.
+              De studentenclub in Aalst voor
+              studenten die graag uitgaan in
+              Aalst.
             </p>
           </div>
 
           <div>
-            <h4 className="mb-3 text-lg font-black text-[#dcaa2d]">Socials</h4>
+            <h4 className="mb-3 text-lg font-black text-[#dcaa2d]">
+              Socials
+            </h4>
 
             <a
               className="mb-2 block text-white/75 hover:text-[#dcaa2d]"
@@ -1418,8 +1874,13 @@ const jumpToLine = (time) => {
           </div>
 
           <div>
-            <h4 className="mb-3 text-lg font-black text-[#dcaa2d]">Contact</h4>
-            <p className="mb-2 text-white/75">9300 Aalst, België</p>
+            <h4 className="mb-3 text-lg font-black text-[#dcaa2d]">
+              Contact
+            </h4>
+
+            <p className="mb-2 text-white/75">
+              9300 Aalst, België
+            </p>
 
             <a
               className="text-white/75 hover:text-[#dcaa2d]"
